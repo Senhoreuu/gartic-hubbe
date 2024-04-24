@@ -8,100 +8,73 @@
 
 <body>
 
-    <div class="container-canvas" style="position: absolute; top: 0;">
-        <div class="canvas disabled">
-            <div class="toolbar">
-                <div class="toolbar__item">
-                    <a class="toolbar__button" id="undo">
-                        <i class="fas fa-undo"></i>
-                    </a>
-                    <a class="toolbar__button" id="redo">
-                        <i class="fas fa-redo"></i>
-                    </a>
-                </div>
+    <div class="toolbar opacity-hidden" style="position: absolute; top: 20vh;">
+        <div class="toolbar__item">
+            <a class="toolbar__button" id="pencil">
+                <i class="fas fa-pencil-alt"></i>
+            </a>
+            <a class="toolbar__button" id="eraser">
+                <i class="fas fa-eraser"></i>
+            </a>
 
-                <div class="toolbar__item">
-                    <a class="toolbar__button" id="pencil">
-                        <i class="fas fa-pencil-alt"></i>
-                    </a>
-                    <a class="toolbar__button" id="eraser">
-                        <i class="fas fa-eraser"></i>
-                    </a>
-
-                    <div class="size-div">
-                        <input type="range" max="100" min="3" value="5" id="size">
-                    </div>
-                </div>
-
-                <div class="toolbar__item" id="colors">
-                    <div class="color" style="background: #000000" data-color="#000000"></div>
-                    <div class="color" style="background: #ffffff" data-color="#ffffff"></div>
-                    <div class="color" style="background: #ff0000" data-color="#ff0000"></div>
-                    <div class="color" style="background: #00ff00" data-color="#00ff00"></div>
-                    <div class="color" style="background: #0000ff" data-color="#0000ff"></div>
-                    <div class="color" style="background: #ffff00" data-color="#ffff00"></div>
-                    <div class="color" style="background: #00ffff" data-color="#00ffff"></div>
-                    <div class="color" style="background: #ff00ff" data-color="#ff00ff"></div>
-                    <div class="color" style="background: #c0c0c0" data-color="#c0c0c0"></div>
-                    <div class="color" style="background: #808080" data-color="#808080"></div>
-                    <div class="color" style="background: #800000" data-color="#800000"></div>
-                    <div class="color" style="background: #808000" data-color="#808000"></div>
-
-                    <div class="color-div">
-                        <label>
-                            <input type="text" class="text-input" value="#000000">
-                            <input type="color" value="#000000" class="color-input">
-                        </label>
-                    </div>
-                </div>
-
-                <div class="toolbar__item" id="fill">
-                    <a class="color-bg" style="background: #000000" data-color="#000000">
-                        <i class="fas fa-paint-roller color-bg" data-color="#000000"></i>
-                    </a>
-                    <a class="color-bg" style="background: #ffffff" data-color="#ffffff">
-                        <i class="fas fa-paint-roller color-bg" data-color="#ffffff"></i>
-                    </a>
-                    <a class="color-bg" style="background: #ff0000" data-color="#ff0000">
-                        <i class="fas fa-paint-roller color-bg" data-color="#ff0000"></i>
-                    </a>
-                    <a class="color-bg" style="background: #00ff00" data-color="#00ff00">
-                        <i class="fas fa-paint-roller color-bg" data-color="#00ff00"></i>
-                    </a>
-                    <a class="color-bg" style="background: #0000ff" data-color="#0000ff">
-                        <i class="fas fa-paint-roller color-bg" data-color="#0000ff"></i>
-                    </a>
-                    <a class="color-bg" style="background: #ffff00" data-color="#ffff00">
-                        <i class="fas fa-paint-roller color-bg" data-color="#ffff00"></i>
-                    </a>
-                    <a class="color-bg" style="background: #00ffff" data-color="#00ffff">
-                        <i class="fas fa-paint-roller color-bg" data-color="#00ffff"></i>
-                    </a>
-                    <a class="color-bg" style="background: #ff00ff" data-color="#ff00ff">
-                        <i class="fas fa-paint-roller color-bg" data-color="#ff00ff"></i>
-                    </a>
-                    <a class="color-bg" style="background: #c0c0c0" data-color="#c0c0c0">
-                        <i class="fas fa-paint-roller color-bg" data-color="#c0c0c0"></i>
-                    </a>
-                    <a class="color-bg" style="background: #808080" data-color="#808080">
-                        <i class="fas fa-paint-roller color-bg" data-color="#808080"></i>
-                    </a>
-                    <a class="color-bg" style="background: #800000" data-color="#800000">
-                        <i class="fas fa-paint-roller color-bg" data-color="#800000"></i>
-                    </a>
-                    <a class="color-bg" style="background: #808000" data-color="#808000">
-                        <i class="fas fa-paint-roller color-bg" data-color="#808000"></i>
-                    </a>
-
-                    <div class="color-div">
-                        <label>
-                            <input type="text" class="text-input text-fill" value="#000000">
-                            <input type="color" value="#000000" class="color-input color-fill">
-                        </label>
-                    </div>
-                </div>
-
+            <div class="size-div">
+                <input type="range" max="100" min="3" value="5" id="size">
             </div>
+        </div>
+
+        <div class="toolbar__item" id="colors">
+            <div class="color" style="background: #000000" data-color="#000000"></div>
+            <div class="color" style="background: #ffffff" data-color="#ffffff"></div>
+            <div class="color" style="background: #ff0000" data-color="#ff0000"></div>
+            <div class="color" style="background: #00ff00" data-color="#00ff00"></div>
+            <div class="color" style="background: #0000ff" data-color="#0000ff"></div>
+            <div class="color" style="background: #ffff00" data-color="#ffff00"></div>
+            <div class="color" style="background: #00ffff" data-color="#00ffff"></div>
+            <div class="color" style="background: #ff00ff" data-color="#ff00ff"></div>
+            <div class="color" style="background: #c0c0c0" data-color="#c0c0c0"></div>
+            <div class="color" style="background: #808080" data-color="#808080"></div>
+            <div class="color" style="background: #800000" data-color="#800000"></div>
+            <div class="color" style="background: #808000" data-color="#808000"></div>
+
+            <div class="color-div">
+                <label>
+                    <input type="text" class="text-input" value="#000000">
+                    <input type="color" value="#000000" class="color-input">
+                </label>
+            </div>
+        </div>
+
+        <div class="toolbar__item" id="fill">
+            <i class="bucket fa-solid fa-fill-drip" style="
+            color: #000000;
+        "></i>
+            <div class="color-div">
+
+                <label>
+                    <input type="text" class="text-input text-fill" value="#000000" disabled="">
+                    <input type="color" value="#000000" class="color-input color-fill" disabled="">
+                </label>
+            </div>
+        </div>
+
+        <div class="toolbar__item">
+            <a class="toolbar__button" id="undo">
+                <i class="fas fa-undo"></i>
+            </a>
+            <a class="toolbar__button" id="redo">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div class="container-canvas opacity-hidden" style="position: absolute; top: 20vh;">
+        <div class="canvas-header">
+            <div class="cursor-move">
+                <p>Pressione para arrastar</p>
+            </div>
+        </div>
+        <div class="canvas disabled">
             <canvas class="canvas-container" width="800" height="600" id="canvas"></canvas>
             <div class="mouse-follow" id="cursor"></div>
         </div>

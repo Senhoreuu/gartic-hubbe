@@ -1,6 +1,6 @@
 const users = new Map();
 const events = new Map();
-let lastData = [];
+const lastData = [];
 
 const game = {
     player: 0
@@ -27,7 +27,7 @@ Events.on('userLeave', (user) => {
 events.set('paint-ready', (entity) => {
     if (!lastData.length) return;
 
-    entity.sendUIMessage('drawAll', JSON.stringify({ history: [...lastData] }));
+    entity.sendUIMessage('drawAll', JSON.stringify({ history: lastData }));
 });
 
 events.set('paint', (entity, data) => {
@@ -44,11 +44,22 @@ events.set('paint', (entity, data) => {
     lastData.push(data.history);
 });
 
+events.set('notification', (entity, data) => {
+    if (!("message" in data)) return;
+
+    data.message = data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    entity.notification('generic', data.message || "");
+});
+
 Commands.register('paint', true, (user) => {
     game.player = user.getPlayerId();
     user.sendUIMessage('playing', JSON.stringify({ playing: true }));
 
+    lastData.length = 0;
+
     users.forEach((u) => {
+        u.sendUIMessage('clear', "{}");
         if (u.equals(user)) return;
 
         u.sendUIMessage('playing', JSON.stringify({ playing: false }));

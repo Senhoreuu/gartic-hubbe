@@ -14,6 +14,17 @@ var redo_list = [];
 var undo_limit = 50;
 var playing = false;
 var ready = false;
+var pencilText = document.querySelector('.text-input');
+var pencilColor = document.querySelector('.color-input');
+var fillElement = document.getElementById('fill');
+var colorsElement = document.getElementById('colors');
+var textFill = document.querySelector('.text-fill');
+var colorFill = document.querySelector('.color-fill');
+var undoElement = document.getElementById('undo');
+var redoElement = document.getElementById('redo');
+var size = document.getElementById('size');
+var pencil = document.getElementById('pencil');
+var eraser = document.getElementById('eraser');
 
 function startDrawn() {
     if (!playing) return;
@@ -109,6 +120,9 @@ function setEraser(val) {
 
 function fill(color) {
     if (!playing) return;
+
+    $('.bucket').css('color', color.value);
+
     if (ctx) {
         var value = '';
         if (color instanceof HTMLInputElement)
@@ -133,7 +147,6 @@ function redo() {
     if (!playing) return;
     if (ctx) {
         if (redo_list.length > 0) {
-            console.log(redo_list);
             var redo = redo_list.pop();
             undo_list.push(ctx.getImageData(0, 0, 800, 600));
             ctx.putImageData(redo, 0, 0);
@@ -210,6 +223,156 @@ function receiveDrawn(data) {
     }
 }
 
+function createCursor(cursor, event) {
+    cursor.style.width = currentSize + 'px';
+    cursor.style.height = currentSize + 'px';
+    cursor.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    
+    var rect = event.target.getBoundingClientRect();
+    var offsetX = event.clientX - rect.left;
+    var offsetY = event.clientY - rect.top + window.scrollY;
+    
+    cursor.style.left = (offsetX - currentSize / 2) + 'px';
+    cursor.style.top = (offsetY - currentSize / 2) + 'px';
+
+    if (!eraser) {
+        cursor.style.backgroundColor = currentColor;
+    }
+}
+
+
+
+function changePermission(permission) {
+    pencilText.disabled = permission;
+    pencilColor.disabled = permission;
+    fillElement.disabled = permission;
+    colorsElement.disabled = permission;
+    textFill.disabled = permission;
+    colorFill.disabled = permission;
+    undoElement.disabled = permission;
+    redoElement.disabled = permission;
+    size.disabled = permission;
+    pencil.disabled = permission;
+    eraser.disabled = permission;
+}
+
+function createCanvasEvents() {
+    cursorElement = document.getElementById('cursor');
+    const canvas = document.getElementById('canvas');
+
+    ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 800, 600);
+    }
+
+    const textFill = document.querySelector('.text-fill');
+    const colorFill = document.querySelector('.color-fill');
+
+    const size = document.getElementById('size');
+    size.onchange = changeSize;
+
+    const pencil = document.getElementById('pencil');
+    pencil.onclick = function () {
+        setEraser(false);
+    };
+
+    const eraser = document.getElementById('eraser');
+    eraser.onclick = function () {
+        setEraser(true);
+    };
+
+    const pencilText = document.querySelector('.text-input');
+    pencilText.addEventListener('input', function (e) {
+        changeColor(this);
+
+        pencilColor.value = this.value;
+    });
+
+    const pencilColor = document.querySelector('.color-input');
+    pencilColor.addEventListener('input', function (e) {
+        if (!playing) return;
+
+        changeColor(this);
+
+        pencilText.value = this.value;
+    });
+
+    const fillElement = document.getElementById('fill');
+    fillElement.onclick = function (e) {
+        if (!playing) return;
+        if (!e.target.hasAttribute('data-color')) return;
+
+        fill(e.target);
+
+        textFill.value = e.target.getAttribute('data-color');
+        colorFill.value = e.target.getAttribute('data-color');
+    };
+
+    textFill.onchange = function (e) {
+        if (!playing) return;
+        fill(this);
+        colorFill.value = this.value;
+    };
+
+    colorFill.onchange = function (e) {
+        if (!playing) return;
+        fill(this);
+        textFill.value = this.value;
+    };
+
+    const colorsElement = document.getElementById('colors');
+    colorsElement.onclick = function (e) {
+        if (!playing) return;
+        if (!e.target.hasAttribute('data-color')) return;
+
+        changeColor(e.target);
+        pencilColor.value = e.target.getAttribute('data-color');
+        pencilText.value = e.target.getAttribute('data-color');
+    };
+
+    const undoElement = document.getElementById('undo');
+    undoElement.onclick = undo;
+
+    const redoElement = document.getElementById('redo');
+    redoElement.onclick = redo;
+
+    canvas.onmousedown = function (e) {
+        if (!playing) return;
+
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+        startDrawn();
+        draw(lastX, lastY);
+        createCursor(cursorElement, e);
+    };
+
+    canvas.onmouseup = stopDrawn;
+    canvas.onmousemove = function (e) {
+        if (!playing) return;
+
+        const x = e.offsetX;
+        const y = e.offsetY;
+        draw(x, y);
+        createCursor(cursorElement, e);
+    };
+    canvas.onmouseover = function (e) {
+        cursorElement.style.display = 'block';
+    };
+
+    canvas.onmouseleave = function (e) {
+        cursorElement.style.display = 'none';
+        stopDrawn();
+    };
+
+    changePermission(true);
+
+    $('.bucket').on('click', function () {
+        if (!playing) return;
+        window.sendScriptMessage('notification', { message: 'A ferramenta de preenchimento não está disponível.' });
+    });
+}
+
 function Paint(scriptName) {
     this.events = new Map();
     this.scriptName = scriptName;
@@ -263,8 +426,19 @@ function Paint(scriptName) {
     handler.on('draw', receiveDrawn);
 
     handler.on('drawAll', function (data) {
-        for (let chunk of data.history) {
-            receiveDrawn({ history: [chunk] });
+        for (const chunk of data.history) {
+            receiveDrawn({ history: chunk });
+        }
+    });
+
+    handler.on('clear', function (data) {
+        if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 800, 600);
+
+            undo_list = [];
+            redo_list = [];
+            historyData = [];
         }
     });
 
@@ -277,126 +451,14 @@ function Paint(scriptName) {
             setEraser(false);
         }
 
-        pencilText.disabled = !playing;
-        pencilColor.disabled = !playing;
-        fillElement.disabled = !playing;
-        colorsElement.disabled = !playing;
-        textFill.disabled = !playing;
-        colorFill.disabled = !playing;
-        undoElement.disabled = !playing;
-        redoElement.disabled = !playing;
-        size.disabled = !playing;
-        pencil.disabled = !playing;
-        eraser.disabled = !playing;
+        changePermission(!playing);
     });
 
-    cursorElement = document.getElementById('cursor');
-    const canvas = document.getElementById('canvas');
-    ctx = canvas.getContext('2d');
-    if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 800, 600);
-    }
-
-    const textFill = document.querySelector('.text-fill');
-    const colorFill = document.querySelector('.color-fill');
-
-    const size = document.getElementById('size');
-    size.onchange = changeSize;
-
-    const pencil = document.getElementById('pencil');
-    pencil.onclick = function () {
-        setEraser(false);
-    };
-
-    const eraser = document.getElementById('eraser');
-    eraser.onclick = function () {
-        setEraser(true);
-    };
-
-    const pencilText = document.querySelector('.text-input');
-    pencilText.addEventListener('input', function (e) {
-        changeColor(this);
-
-        pencilColor.value = this.value;
-    });
-
-    const pencilColor = document.querySelector('.color-input');
-    pencilColor.addEventListener('input', function (e) {
-        changeColor(this);
-
-        pencilText.value = this.value;
-    });
-
-    const fillElement = document.getElementById('fill');
-    fillElement.onclick = function (e) {
-        if (!e.target.hasAttribute('data-color')) return;
-
-        fill(e.target);
-
-        textFill.value = e.target.getAttribute('data-color');
-        colorFill.value = e.target.getAttribute('data-color');
-    };
-
-    textFill.onchange = function (e) {
-        fill(this);
-        colorFill.value = this.value;
-    };
-
-    colorFill.onchange = function (e) {
-        fill(this);
-        textFill.value = this.value;
-    };
-
-    const colorsElement = document.getElementById('colors');
-    colorsElement.onclick = function (e) {
-        if (!e.target.hasAttribute('data-color')) return;
-
-        changeColor(e.target);
-        pencilColor.value = e.target.getAttribute('data-color');
-        pencilText.value = e.target.getAttribute('data-color');
-    };
-
-    const undoElement = document.getElementById('undo');
-    undoElement.onclick = function () {
-        undo();
-    };
-
-    const redoElement = document.getElementById('redo');
-    redoElement.onclick = function () {
-        redo();
-    };
-
-    canvas.onmousedown = function (e) {
-        lastX = e.offsetX;
-        lastY = e.offsetY;
-        startDrawn();
-        draw(lastX, lastY);
-    };
-
-    canvas.onmouseup = stopDrawn;
-    canvas.onmousemove = function (e) {
-        const x = e.offsetX;
-        const y = e.offsetY;
-        draw(x, y);
-    };
-
-    canvas.onmouseleave = stopDrawn;
-
-    pencilText.disabled = true;
-    pencilColor.disabled = true;
-    fillElement.disabled = true;
-    colorsElement.disabled = true;
-    colorFill.disabled = true;
-    textFill.disabled = true;
-    undoElement.disabled = true;
-    redoElement.disabled = true;
-    size.disabled = true;
-    pencil.disabled = true;
-    eraser.disabled = true;
+    createCanvasEvents();
 
     $('#script-events').on('uiMessage', handler.emit);
     $('#script-events').on('dispose', handler.dispose);
+
     setTimeout(() => {
         ready = true;
         window.sendScriptMessage('paint-ready', {});
@@ -404,5 +466,5 @@ function Paint(scriptName) {
         document.querySelector('div[class="canvas disabled"]')?.classList.remove('disabled');
     }, 3000);
 
-    $(".container-canvas").draggable({ scroll: false, handle: ".toolbar" });
+    $(".container-canvas").draggable({ scroll: false, handle: ".cursor-move" });
 })();
