@@ -1,0 +1,161 @@
+.canvas.disabled {
+    pointer-events: none;
+    position: relative;
+}
+
+.canvas.disabled:after {
+    content: "";
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://cdn.dribbble.com/users/591610/screenshots/3854786/caballete2.gif");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    z-index: 1;
+}
+
+.mouse-follow {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.5);
+    outline: 1px solid #000;
+    border-radius: 50%;
+    z-index: 999;
+    pointer-events: none;
+    display: none;
+}
+
+.canvas {
+    display: flex;
+    align-items: center;
+    cursor: crosshair;
+}
+
+.canvas .alert {
+    display: none;
+}
+
+.canvas .toolbar {
+    height: 600px;
+    background: #f3f3f3;
+    width: 200px;
+    border: 1px solid #ececec;
+    border-radius: 15px 0 0 15px;
+    overflow-y: auto;
+}
+
+.canvas .toolbar .toolbar__item {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #b0b0b0;
+    cursor: pointer;
+}
+
+.canvas .toolbar .toolbar__item a {
+    text-decoration: none;
+    color: #000;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.canvas .toolbar .toolbar__item a:hover {
+    color: #68c8ce;
+}
+
+.canvas .toolbar .toolbar__item .color {
+    width: 25px;
+    height: 25px;
+    margin: 0 5px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.canvas .toolbar .toolbar__item .color:hover {
+    border: 2px solid #000;
+}
+
+.canvas .toolbar .toolbar__item .color-bg {
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    font-size: 20px;
+    border-radius: 5px;
+    padding: 0;
+    margin: 5px;
+}
+
+.canvas .toolbar .toolbar__item .color-bg i {
+    margin: 0;
+}
+
+.canvas .toolbar .toolbar__item .color-div {
+    width: 100%;
+    height: 30px;
+    padding: 0 5px;
+    margin-top: 10px;
+}
+
+.canvas .toolbar .toolbar__item .color-div>label {
+    position: relative;
+}
+
+.canvas .toolbar .toolbar__item .color-div>label .text-input {
+    width: 80%;
+    height: 30px;
+    padding: 0 30px 0 5px;
+    border: 1px solid #b0b0b0;
+    border-radius: 5px;
+}
+
+.canvas .toolbar .toolbar__item .color-div>label .text-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.canvas .toolbar .toolbar__item .color-div>label .color-input {
+    position: absolute;
+    top: 5px;
+    right: 25px;
+    width: 20px;
+    height: 20px;
+    border-radius: 15px;
+    border: none;
+}
+
+.canvas .canvas-container {
+    height: 600px;
+    width: 800px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    border-top-right-radius: 15px;
+}
+
+.canvas-container {
+    background: #ffffff;
+}
+
+.link-page input {
+    outline: none;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #b0b0b0;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 5px;
+    width: 500px;
+}
+
+.canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
