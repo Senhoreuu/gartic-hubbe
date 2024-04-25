@@ -13,7 +13,7 @@ var undo_list = [];
 var redo_list = [];
 var undo_limit = 50;
 var playing = false;
-var ready = false;
+var ready = true;
 var pencilText = document.querySelector('.text-input');
 var pencilColor = document.querySelector('.color-input');
 var colorsElement = document.getElementById('colors');
@@ -483,7 +483,7 @@ function Paint(scriptName) {
         const eventData = event.detail;
 
         if (!eventData) return;
-        
+
         const value = eventData.data;
         const exec = this.events.get(eventData.name);
         let data = value;
@@ -573,12 +573,7 @@ function Paint(scriptName) {
     $('#script-events').on('uiMessage', handler.emit);
     $('#script-events').on('dispose', handler.dispose);
 
-    setTimeout(() => {
-        ready = true;
-        window.sendScriptMessage('paint-ready', {});
-
-        document.querySelector('div[class="canvas disabled"]')?.classList.remove('disabled');
-    }, 3000);
+    window.sendScriptMessage('paint-ready', {});
 
     $(".container-canvas").draggable({ scroll: false, handle: ".cursor-move" });
 })();
