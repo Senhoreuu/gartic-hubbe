@@ -44,7 +44,7 @@
 .toolbar {
     background: #f3f3f3;
     width: 200px;
-    border: 1px solid #d8e707;
+    border: 1px solid #000000;
     border-radius: 15px;
     overflow-y: auto;
     position: absolute;

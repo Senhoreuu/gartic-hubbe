@@ -1,6 +1,7 @@
 const users = new Map();
 const events = new Map();
 const lastData = [];
+const redoData = [];
 
 const game = {
     player: 0
@@ -35,13 +36,13 @@ events.set('paint', (entity, data) => {
 
     if (!("history" in data) || !data.history.length) return;
 
+    lastData.push(data.history);
+
     users.forEach(element => {
         if (element.equals(entity)) return;
 
         element.sendUIMessage('draw', JSON.stringify({ history: data.history }));
     });
-
-    lastData.push(data.history);
 });
 
 events.set('notification', (entity, data) => {
@@ -52,6 +53,36 @@ events.set('notification', (entity, data) => {
     entity.notification('generic', data.message || "");
 });
 
+events.set('undo', (entity, data) => {
+    if (game.player !== entity.getPlayerId()) return;
+
+    if (!lastData.length) return;
+
+    redoData.push(lastData.pop());
+
+    users.forEach(element => {
+        if (element.equals(entity)) return;
+
+        element.sendUIMessage('clear', "");
+        element.sendUIMessage('drawAll', JSON.stringify({ history: lastData }));
+    });
+});
+
+events.set('redo', (entity, data) => {
+    if (game.player !== entity.getPlayerId()) return;
+
+    if (!redoData.length) return;
+
+    lastData.push(redoData.pop());
+
+    users.forEach(element => {
+        if (element.equals(entity)) return;
+
+        element.sendUIMessage('clear', "");
+        element.sendUIMessage('drawAll', JSON.stringify({ history: lastData }));
+    });
+});
+
 Commands.register('paint', true, (user) => {
     game.player = user.getPlayerId();
     user.sendUIMessage('playing', JSON.stringify({ playing: true }));
@@ -59,7 +90,7 @@ Commands.register('paint', true, (user) => {
     lastData.length = 0;
 
     users.forEach((u) => {
-        u.sendUIMessage('clear', "{}");
+        u.sendUIMessage('clear', "");
         if (u.equals(user)) return;
 
         u.sendUIMessage('playing', JSON.stringify({ playing: false }));

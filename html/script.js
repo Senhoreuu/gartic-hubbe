@@ -1,9 +1,9 @@
 var cursorElement;
 var ctx;
 var currentColor = '#000000';
-var currentColorBg = '#ffffff';
 var currentSize = 5;
-var eraser = false;
+var action = "DRAW";
+var users = [];
 var isDrawing = false;
 var lastX = 0;
 var lastY = 0;
@@ -16,33 +16,37 @@ var playing = false;
 var ready = false;
 var pencilText = document.querySelector('.text-input');
 var pencilColor = document.querySelector('.color-input');
-var fillElement = document.getElementById('fill');
 var colorsElement = document.getElementById('colors');
-var textFill = document.querySelector('.text-fill');
-var colorFill = document.querySelector('.color-fill');
 var undoElement = document.getElementById('undo');
 var redoElement = document.getElementById('redo');
 var size = document.getElementById('size');
 var pencil = document.getElementById('pencil');
 var eraser = document.getElementById('eraser');
+var bucket = document.querySelector('#bucket');
+var lineJoin = 'round';
+var lineCap = 'round';
+var canvas = document.getElementById('canvas');
 
 function startDrawn() {
-    if (!playing) return;
+    if (!playing || !ctx) return;
+
+    if (action === 'BUCKET') return;
+
     if (ctx) {
         isDrawing = true;
         ctx.strokeStyle = currentColor;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
+        ctx.lineJoin = lineJoin;
+        ctx.lineCap = lineCap;
         ctx.lineWidth = currentSize;
 
-        if (eraser) {
+        if (action === 'ERASER') {
             ctx.strokeStyle = currentColorBg;
         }
 
         lastHistory = {
             c: ctx.strokeStyle,
             s: ctx.lineWidth,
-            a: eraser ? 'ERASER' : 'DRAW',
+            a: action,
             data: []
         };
 
@@ -55,6 +59,7 @@ function startDrawn() {
 
 function stopDrawn() {
     if (!playing) return;
+
     isDrawing = false;
 
     if (ctx) {
@@ -70,17 +75,133 @@ function stopDrawn() {
     }
 }
 
-function addHistory(x, y, sx, sy) {
-    if (!playing) return;
-    if (lastHistory === null) return;
-    lastHistory.data.push({ x: x, y: y, sx: sx, sy: sy });
+function floodFill(x, y, color) {
+    pixel_stack = [{ x: x, y: y }];
+    pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var linear_cords = (y * canvas.width + x) * 4;
+    original_color = {
+        r: pixels.data[linear_cords],
+        g: pixels.data[linear_cords + 1],
+        b: pixels.data[linear_cords + 2],
+        a: pixels.data[linear_cords + 3]
+    };
 
-    if (lastHistory) {
-        if (lastHistory.data.length > 5) {
-            sendDrawn([lastHistory]);
-            lastHistory.data = [];
+    if (color.r === original_color.r && color.g === original_color.g &&
+        color.b === original_color.b && color.a === original_color.a) {
+        return;
+    }
+
+
+    while (pixel_stack.length > 0) {
+        new_pixel = pixel_stack.shift();
+        x = new_pixel.x;
+        y = new_pixel.y;
+
+        linear_cords = (y * canvas.width + x) * 4;
+        while (y-- >= 0 &&
+            (pixels.data[linear_cords] == original_color.r &&
+                pixels.data[linear_cords + 1] == original_color.g &&
+                pixels.data[linear_cords + 2] == original_color.b &&
+                pixels.data[linear_cords + 3] == original_color.a)) {
+            linear_cords -= canvas.width * 4;
+        }
+        linear_cords += canvas.width * 4;
+        y++;
+
+        var reached_left = false;
+        var reached_right = false;
+        while (y++ < canvas.height &&
+            (pixels.data[linear_cords] == original_color.r &&
+                pixels.data[linear_cords + 1] == original_color.g &&
+                pixels.data[linear_cords + 2] == original_color.b &&
+                pixels.data[linear_cords + 3] == original_color.a)) {
+            pixels.data[linear_cords] = color.r;
+            pixels.data[linear_cords + 1] = color.g;
+            pixels.data[linear_cords + 2] = color.b;
+            pixels.data[linear_cords + 3] = color.a;
+
+            if (x > 0) {
+                if (pixels.data[linear_cords - 4] == original_color.r &&
+                    pixels.data[linear_cords - 4 + 1] == original_color.g &&
+                    pixels.data[linear_cords - 4 + 2] == original_color.b &&
+                    pixels.data[linear_cords - 4 + 3] == original_color.a) {
+                    if (!reached_left) {
+                        pixel_stack.push({ x: x - 1, y: y });
+                        reached_left = true;
+                    }
+                } else if (reached_left) {
+                    reached_left = false;
+                }
+            }
+
+            if (x < canvas.width - 1) {
+                if (pixels.data[linear_cords + 4] == original_color.r &&
+                    pixels.data[linear_cords + 4 + 1] == original_color.g &&
+                    pixels.data[linear_cords + 4 + 2] == original_color.b &&
+                    pixels.data[linear_cords + 4 + 3] == original_color.a) {
+                    if (!reached_right) {
+                        pixel_stack.push({ x: x + 1, y: y });
+                        reached_right = true;
+                    }
+                } else if (reached_right) {
+                    reached_right = false;
+                }
+            }
+
+            linear_cords += canvas.width * 4;
         }
     }
+    ctx.putImageData(pixels, 0, 0);
+}
+
+function is_in_pixel_stack(x, y, pixel_stack) {
+    for (var i = 0; i < pixel_stack.length; i++) {
+        if (pixel_stack[i].x == x && pixel_stack[i].y == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// adapted from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+function color_to_rgba(color) {
+    if (color[0] == "#") { // hex notation
+        color = color.replace("#", "");
+        var bigint = parseInt(color, 16);
+        var r = (bigint >> 16) & 255;
+        var g = (bigint >> 8) & 255;
+        var b = bigint & 255;
+        return {
+            r: r,
+            g: g,
+            b: b,
+            a: 255
+        };
+    } else if (color.indexOf("rgba(") == 0) { // already in rgba notation
+        color = color.replace("rgba(", "").replace(" ", "").replace(")", "").split(",");
+        return {
+            r: color[0],
+            g: color[1],
+            b: color[2],
+            a: color[3] * 255
+        };
+    } else {
+        console.error("warning: can't convert color to rgba: " + color);
+        return {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0
+        };
+    }
+}
+
+function addHistory(x, y, sx, sy) {
+    if (!playing) return;
+
+    if (lastHistory === null) return;
+
+    lastHistory.data.push({ x: x, y: y, sx: sx, sy: sy });
 }
 
 function draw(x, y) {
@@ -101,6 +222,7 @@ function draw(x, y) {
 
 function changeColor(color) {
     if (!playing) return;
+
     var value = '';
     if (color instanceof HTMLInputElement)
         value = color.value;
@@ -115,58 +237,41 @@ function changeColor(color) {
 
 function setEraser(val) {
     if (!playing) return;
-    eraser = val;
-}
 
-function fill(color) {
-    if (!playing) return;
-
-    $('.bucket').css('color', color.value);
-
-    if (ctx) {
-        var value = '';
-        if (color instanceof HTMLInputElement)
-            value = color.value;
-        else if (color instanceof HTMLElement) {
-            value = color.getAttribute('data-color') || '';
-        }
-
-        if (value !== null) {
-            currentColorBg = value;
-            ctx.fillStyle = value;
-            undo_list.push(ctx.getImageData(0, 0, 800, 600));
-            ctx.fillRect(0, 0, 800, 600);
-            sendDrawn([{
-                c: value, a: 'FILL'
-            }]);
-        }
-    }
+    action = val ? 'ERASER' : 'DRAW';
 }
 
 function redo() {
     if (!playing) return;
+
     if (ctx) {
         if (redo_list.length > 0) {
             var redo = redo_list.pop();
             undo_list.push(ctx.getImageData(0, 0, 800, 600));
             ctx.putImageData(redo, 0, 0);
+
+            window.sendScriptMessage('redo', "");
         }
     }
 }
 
 function undo() {
     if (!playing) return;
+
     if (ctx) {
         if (undo_list.length > 0) {
             var undo = undo_list.pop();
             redo_list.push(ctx.getImageData(0, 0, 800, 600));
             ctx.putImageData(undo, 0, 0);
+
+            window.sendScriptMessage('undo', "");
         }
     }
 }
 
 function changeSize(event) {
     if (!playing) return;
+
     if (ctx) {
         var element = event.target;
         if (element instanceof HTMLInputElement) {
@@ -218,78 +323,75 @@ function receiveDrawn(data) {
                     break;
                 }
 
+                case 'BUCKET': {
+                    floodFill(data[0].x, data[0].y, color_to_rgba(color));
+                    break;
+                }
+
             }
         }
     }
 }
 
 function createCursor(cursor, event) {
+    if (!playing) {
+        cursor.style.display = 'none';
+        return;
+    }
+
     cursor.style.width = currentSize + 'px';
     cursor.style.height = currentSize + 'px';
     cursor.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    
-    var rect = event.target.getBoundingClientRect();
-    var offsetX = event.clientX - rect.left;
-    var offsetY = event.clientY - rect.top + window.scrollY;
-    
-    cursor.style.left = (offsetX - currentSize / 2) + 'px';
-    cursor.style.top = (offsetY - currentSize / 2) + 'px';
 
-    if (!eraser) {
+    cursor.style.left = (event.pageX - currentSize / 2) + 'px';
+    cursor.style.top = (event.pageY - currentSize / 2) + 'px';
+
+    if (!action === 'ERASER') {
         cursor.style.backgroundColor = currentColor;
     }
 }
 
+function removeCursor() {
+    cursorElement.style.display = 'none';
+}
 
-
-function changePermission(permission) {
-    pencilText.disabled = permission;
-    pencilColor.disabled = permission;
-    fillElement.disabled = permission;
-    colorsElement.disabled = permission;
-    textFill.disabled = permission;
-    colorFill.disabled = permission;
-    undoElement.disabled = permission;
-    redoElement.disabled = permission;
-    size.disabled = permission;
-    pencil.disabled = permission;
-    eraser.disabled = permission;
+function changePermission(disabled) {
+    pencilText.disabled = disabled;
+    pencilColor.disabled = disabled;
+    colorsElement.disabled = disabled;
+    undoElement.disabled = disabled;
+    redoElement.disabled = disabled;
+    size.disabled = disabled;
+    pencil.disabled = disabled;
+    eraser.disabled = disabled;
 }
 
 function createCanvasEvents() {
     cursorElement = document.getElementById('cursor');
-    const canvas = document.getElementById('canvas');
 
     ctx = canvas.getContext('2d', { willReadFrequently: true });
+
     if (ctx) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, 800, 600);
     }
 
-    const textFill = document.querySelector('.text-fill');
-    const colorFill = document.querySelector('.color-fill');
-
-    const size = document.getElementById('size');
     size.onchange = changeSize;
 
-    const pencil = document.getElementById('pencil');
     pencil.onclick = function () {
         setEraser(false);
     };
 
-    const eraser = document.getElementById('eraser');
     eraser.onclick = function () {
         setEraser(true);
     };
 
-    const pencilText = document.querySelector('.text-input');
     pencilText.addEventListener('input', function (e) {
         changeColor(this);
 
         pencilColor.value = this.value;
     });
 
-    const pencilColor = document.querySelector('.color-input');
     pencilColor.addEventListener('input', function (e) {
         if (!playing) return;
 
@@ -298,30 +400,6 @@ function createCanvasEvents() {
         pencilText.value = this.value;
     });
 
-    const fillElement = document.getElementById('fill');
-    fillElement.onclick = function (e) {
-        if (!playing) return;
-        if (!e.target.hasAttribute('data-color')) return;
-
-        fill(e.target);
-
-        textFill.value = e.target.getAttribute('data-color');
-        colorFill.value = e.target.getAttribute('data-color');
-    };
-
-    textFill.onchange = function (e) {
-        if (!playing) return;
-        fill(this);
-        colorFill.value = this.value;
-    };
-
-    colorFill.onchange = function (e) {
-        if (!playing) return;
-        fill(this);
-        textFill.value = this.value;
-    };
-
-    const colorsElement = document.getElementById('colors');
     colorsElement.onclick = function (e) {
         if (!playing) return;
         if (!e.target.hasAttribute('data-color')) return;
@@ -331,10 +409,8 @@ function createCanvasEvents() {
         pencilText.value = e.target.getAttribute('data-color');
     };
 
-    const undoElement = document.getElementById('undo');
     undoElement.onclick = undo;
 
-    const redoElement = document.getElementById('redo');
     redoElement.onclick = redo;
 
     canvas.onmousedown = function (e) {
@@ -348,6 +424,7 @@ function createCanvasEvents() {
     };
 
     canvas.onmouseup = stopDrawn;
+
     canvas.onmousemove = function (e) {
         if (!playing) return;
 
@@ -356,6 +433,7 @@ function createCanvasEvents() {
         draw(x, y);
         createCursor(cursorElement, e);
     };
+
     canvas.onmouseover = function (e) {
         cursorElement.style.display = 'block';
     };
@@ -365,11 +443,32 @@ function createCanvasEvents() {
         stopDrawn();
     };
 
+    canvas.onclick = function (e) {
+        if (!playing) return;
+
+        if (action === 'BUCKET') {
+            undo_list.push(ctx.getImageData(0, 0, 800, 600));
+            if (undo_list.length > undo_limit) {
+                undo_list.shift();
+            }
+
+            floodFill(e.offsetX, e.offsetY, color_to_rgba(currentColor));
+
+            sendDrawn([{
+                c: bucketColor,
+                s: 0,
+                a: 'BUCKET',
+                data: [{ x: e.offsetX, y: e.offsetY }]
+            }]);
+        }
+    };
+
     changePermission(true);
 
-    $('.bucket').on('click', function () {
+    $('#bucket').on('click', function () {
         if (!playing) return;
-        window.sendScriptMessage('notification', { message: 'A ferramenta de preenchimento não está disponível.' });
+
+        action = 'BUCKET';
     });
 }
 
@@ -383,6 +482,11 @@ function Paint(scriptName) {
 
     this.emit = event => {
         const eventData = event.detail;
+
+        if (!eventData) return;
+
+        console.log(eventData.name);
+
         const value = eventData.data;
         const exec = this.events.get(eventData.name);
         let data = value;
@@ -449,9 +553,22 @@ function Paint(scriptName) {
             [undo_list, redo_list] = [[], []];
             historyData = [];
             setEraser(false);
+            removeCursor();
         }
 
         changePermission(!playing);
+    });
+
+    handler.on('undo', function (data) {
+        if (ctx && "undo" in data) {
+            ctx.putImageData(data.undo, 0, 0);
+        }
+    });
+
+    handler.on('redo', function (data) {
+        if (ctx && "redo" in data) {
+            ctx.putImageData(data.redo, 0, 0);
+        }
     });
 
     createCanvasEvents();
