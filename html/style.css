@@ -17,7 +17,7 @@
     background-repeat: no-repeat;
     background-position: center;
     background-size: 100%;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(28, 30, 34, .95);
     z-index: 1;
 }
 
@@ -42,20 +42,14 @@
 }
 
 .toolbar {
-    background: #f3f3f3;
     width: 125px;
-    border: 1px solid #000000;
-    border-radius: 15px;
+    height: 100%;
     overflow-y: auto;
-    position: absolute;
-    left: 0;
-    box-shadow: #000000 0px 0px 10px;
 }
 
 .toolbar .toolbar__item {
-    padding: 10px;
+    padding: 10px 20px;
     text-align: center;
-    border-bottom: 1px solid #b0b0b0;
     cursor: pointer;
 }
 
@@ -72,16 +66,20 @@
     color: #68c8ce;
 }
 
+.toolbar .toolbar__item a {
+    color: #fff;
+}
+
 .toolbar .toolbar__item .color {
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
     margin: 0 5px;
     border-radius: 5px;
     display: inline-block;
 }
 
 .toolbar .toolbar__item .color:hover {
-    border: 2px solid #000;
+    border: 2px solid #fff;
 }
 
 .toolbar .toolbar__item .color-bg {
@@ -101,55 +99,37 @@
 
 .toolbar .toolbar__item .color-div {
     width: 100%;
-    height: 30px;
+    height: 100%;
     padding: 0 5px;
     margin-top: 10px;
 }
 
-.toolbar .toolbar__item .color-div>label {
-    position: relative;
-}
-
-.toolbar .toolbar__item .color-div>label .text-input {
-    width: 100%;
+.toolbar .toolbar__item .color-div .color-input {
+    width: 75px;
     height: 30px;
-    padding: 0 30px 0 5px;
-    border: 1px solid #b0b0b0;
-    border-radius: 5px;
-}
-
-.toolbar .toolbar__item .color-div>label .text-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.toolbar .toolbar__item .color-div>label .color-input {
-    position: absolute;
-    top: 5px;
-    right: 15px;
-    width: 20px;
-    height: 20px;
-    border-radius: 15px;
-    border: none;
+    padding: 0;
 }
 
 .canvas .canvas-container {
     height: 600px;
     width: 800px;
     overflow: hidden;
-    border: 1px solid #ccc;
-    border-radius: 15px;
+}
+
+.container-canvas {
+    display: flex;
+    flex-direction: column;
 }
 
 .canvas-container {
-    background: #ffffff;
+    background: rgba(28, 30, 34, .95);
 }
 
 .link-page input {
     outline: none;
     padding: 5px;
     border-radius: 5px;
-    border: 1px solid #b0b0b0;
+    border: 1px solid #ffffff;
     font-size: 14px;
     font-weight: bold;
     margin: 5px;
@@ -158,7 +138,6 @@
 
 .canvas {
     display: flex;
-    align-items: center;
     justify-content: center;
 }
 
@@ -182,5 +161,94 @@
 }
 
 #size {
-    width: 100px;
+    width: 75px;
+}
+
+.players::-webkit-scrollbar {
+    width: 10px;
+    border-left: 4px solid rgba(28, 30, 34, .95);
+}
+
+.players::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    border-left: 4px solid rgba(28, 30, 34, .95);
+}
+
+.players::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    border-left: 4px solid rgba(28, 30, 34, .95);
+}
+
+.players-container {
+    width: 169px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 7px;
+    gap: 5px;
+    justify-content: space-between;
+}
+
+.players {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    max-height: 90%;
+}
+
+.player-card {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 0px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+
+    img {
+        width: auto;
+        height: 100%;
+    }
+}
+
+.spans-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.buttons-interactions {
+    align-items: center;
+}
+
+.buttons-interactions>div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 7px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
+.scoreboard {
+    background: rgba(28, 30, 34, .95);
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.tools-gartic {
+    background: rgba(28, 30, 34, .95);
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.scored {
+    background: rgba(54, 231, 69, 0.95);
+}
+
+.playing {
+    background: rgba(74, 126, 238, 0.95);
 }

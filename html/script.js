@@ -1,12 +1,20 @@
 var cursorElement;
-var ctx;
+var canvas = document.getElementById('canvas');
+var canvasOverlay = document.getElementById('canvas-overlay');
+var ctx = canvas.getContext('2d', { willReadFrequently: true });
+var ctxOverlay = canvasOverlay.getContext('2d', { willReadFrequently: true });
 var currentColor = '#000000';
 var currentSize = 5;
 var action = "DRAW";
+var shape = "NORMAL";
 var users = [];
 var isDrawing = false;
 var lastX = 0;
 var lastY = 0;
+var startX = 0;
+var startY = 0;
+var endX = 0;
+var endY = 0;
 var lastHistory = null;
 var historyData = [];
 var undo_list = [];
@@ -14,7 +22,6 @@ var redo_list = [];
 var undo_limit = 50;
 var playing = false;
 var ready = true;
-var pencilText = document.querySelector('.text-input');
 var pencilColor = document.querySelector('.color-input');
 var colorsElement = document.getElementById('colors');
 var undoElement = document.getElementById('undo');
@@ -25,7 +32,6 @@ var eraser = document.getElementById('eraser');
 var bucket = document.querySelector('#bucket');
 var lineJoin = 'round';
 var lineCap = 'round';
-var canvas = document.getElementById('canvas');
 
 function startDrawn() {
     if (!playing || !ctx) return;
@@ -34,20 +40,47 @@ function startDrawn() {
 
     if (ctx) {
         isDrawing = true;
+
+        switch (shape) {
+            case 'LINE':
+                lineJoin = 'round';
+                lineCap = 'round';
+                break;
+
+            case 'SQUARE':
+                lineJoin = 'miter';
+                lineCap = 'butt';
+                break;
+
+            case 'NORMAL':
+            case 'CIRCLE':
+                lineJoin = 'round';
+                lineCap = 'round';
+                break;
+        }
+
         ctx.strokeStyle = currentColor;
         ctx.lineJoin = lineJoin;
         ctx.lineCap = lineCap;
         ctx.lineWidth = currentSize;
+        ctx.fillStyle = currentColor;
+        ctxOverlay.strokeStyle = currentColor;
+        ctxOverlay.lineJoin = lineJoin;
+        ctxOverlay.lineCap = lineCap;
+        ctxOverlay.lineWidth = currentSize;
+        ctxOverlay.fillStyle = currentColor;
 
         if (action === 'ERASER') {
-            ctx.strokeStyle = currentColorBg;
+            ctx.strokeStyle = '#ffffff';
+            ctxOverlay.strokeStyle = '#ffffff';
         }
 
         lastHistory = {
             c: ctx.strokeStyle,
             s: ctx.lineWidth,
             a: action,
-            data: []
+            data: [],
+            shape
         };
 
         undo_list.push(ctx.getImageData(0, 0, 800, 600));
@@ -57,12 +90,50 @@ function startDrawn() {
     }
 }
 
-function stopDrawn() {
+function stopDrawn(event) {
     if (!playing) return;
 
     isDrawing = false;
 
     if (ctx) {
+        switch (shape) {
+            case 'LINE':
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(lastX, lastY);
+                ctx.stroke();
+                break;
+
+            case 'SQUARE':
+                ctx.beginPath();
+                ctx.strokeRect(startX, startY, endX, endY);
+                break;
+
+            case 'SQUARE_SOLID':
+                ctx.beginPath();
+                ctx.fillRect(startX, startY, endX, endY);
+                break;
+
+            case 'CIRCLE':
+                ctx.beginPath();
+                ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) + Math.pow(endY, 2)), 0, 2 * Math.PI);
+                ctx.stroke();
+                break;
+
+            case 'CIRCLE_SOLID':
+                ctx.beginPath();
+                ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) + Math.pow(endY, 2)), 0, 2 * Math.PI);
+                ctx.fill();
+                break;
+        }
+
+        if (['SQUARE', 'SQUARE_SOLID', 'CIRCLE', 'CIRCLE_SOLID'].includes(shape)) {
+            addHistory(endX, endY, startX, startY);
+        }
+        else if (shape === 'LINE') {
+            addHistory(lastX, lastY, startX, startY);
+        }
+
         if (lastHistory !== null) {
             historyData.push(lastHistory);
             lastHistory = null;
@@ -72,6 +143,8 @@ function stopDrawn() {
             sendDrawn(historyData);
 
         historyData = [];
+
+        ctxOverlay.clearRect(0, 0, 800, 600);
     }
 }
 
@@ -205,15 +278,62 @@ function addHistory(x, y, sx, sy) {
 
 function draw(x, y) {
     if (!playing) return;
+
     if (ctx) {
         if (!isDrawing) return;
 
-        addHistory(x, y, lastX, lastY);
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
+        ctxOverlay.clearRect(0, 0, 800, 600);
 
+        switch (shape) {
+            case 'LINE': {
+                ctxOverlay.beginPath();
+                ctxOverlay.moveTo(startX, startY);
+                ctxOverlay.lineTo(x, y);
+                ctxOverlay.stroke();
+
+                break;
+            }
+
+            case 'SQUARE': {
+                ctxOverlay.beginPath();
+                ctxOverlay.strokeRect(startX, startY, x - startX, y - startY);
+                break;
+            }
+
+            case 'SQUARE_SOLID': {
+                ctxOverlay.beginPath();
+                ctxOverlay.fillRect(startX, startY, x - startX, y - startY);
+
+                break;
+            }
+
+            case 'CIRCLE': {
+                ctxOverlay.beginPath();
+                ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2)), 0, 2 * Math.PI);
+                ctxOverlay.stroke();
+
+                break;
+            }
+
+            case 'CIRCLE_SOLID': {
+                ctxOverlay.beginPath();
+                ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2)), 0, 2 * Math.PI);
+                ctxOverlay.fill();
+
+                break;
+            }
+
+            default: {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                addHistory(x, y, lastX, lastY);
+            }
+        }
+
+        endX = x - startX;
+        endY = y - startY;
         lastX = x;
         lastY = y;
     }
@@ -232,6 +352,8 @@ function changeColor(color) {
         currentColor = value;
         eraser = false;
     }
+
+    pencilColor.value = currentColor;
 }
 
 function setEraser(val) {
@@ -296,21 +418,73 @@ function receiveDrawn(data) {
             let color = chunk.c;
             let size = chunk.s;
             let data = chunk.data;
+            let shape = chunk.shape;
 
             switch (action) {
                 case 'DRAW':
                 case 'ERASER': {
                     for (let coord of data) {
 
-                        ctx.beginPath();
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = size;
-                        ctx.lineJoin = 'round';
-                        ctx.lineCap = 'round';
-                        ctx.beginPath();
-                        ctx.moveTo(coord.sx, coord.sy);
-                        ctx.lineTo(coord.x, coord.y);
-                        ctx.stroke();
+                        switch (shape) {
+                            case 'LINE': {
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = size;
+                                ctx.lineJoin = 'round';
+                                ctx.lineCap = 'round';
+                                ctx.beginPath();
+                                ctx.moveTo(coord.sx, coord.sy);
+                                ctx.lineTo(coord.x, coord.y);
+                                ctx.stroke();
+                                break;
+                            }
+
+                            case 'SQUARE': {
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = size;
+                                ctx.lineJoin = 'miter';
+                                ctx.lineCap = 'butt';
+                                ctx.beginPath();
+                                ctx.strokeRect(coord.sx, coord.sy, coord.x, coord.y);
+                                break;
+                            }
+
+                            case 'SQUARE_SOLID': {
+                                ctx.fillStyle = color;
+                                ctx.beginPath();
+                                ctx.fillRect(coord.sx, coord.sy, coord.x, coord.y);
+                                break;
+                            }
+
+                            case 'CIRCLE': {
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = size;
+                                ctx.lineJoin = 'round';
+                                ctx.lineCap = 'round';
+                                ctx.beginPath();
+                                ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) + Math.pow(coord.y, 2)), 0, 2 * Math.PI);
+                                ctx.stroke();
+                                break;
+                            }
+
+                            case 'CIRCLE_SOLID': {
+                                ctx.fillStyle = color;
+                                ctx.beginPath();
+                                ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) + Math.pow(coord.y, 2)), 0, 2 * Math.PI);
+                                ctx.fill();
+                                break;
+                            }
+
+                            default: {
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = size;
+                                ctx.lineJoin = 'round';
+                                ctx.lineCap = 'round';
+                                ctx.beginPath();
+                                ctx.moveTo(coord.sx, coord.sy);
+                                ctx.lineTo(coord.x, coord.y);
+                                ctx.stroke();
+                            }
+                        }
 
                     }
                     break;
@@ -332,7 +506,7 @@ function receiveDrawn(data) {
     }
 }
 
-function createCursor(cursor, event) {
+function updateCursor(cursor, event) {
     if (!playing) {
         cursor.style.display = 'none';
         return;
@@ -342,8 +516,18 @@ function createCursor(cursor, event) {
     cursor.style.height = currentSize + 'px';
     cursor.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
 
-    cursor.style.left = (event.pageX - currentSize / 2) + 'px';
-    cursor.style.top = (event.pageY - currentSize / 2) + 'px';
+    const {
+        top,
+        left,
+    } = document.querySelector('.container-canvas').getBoundingClientRect();
+
+    const {
+        clientY,
+        clientX
+    } = event;
+
+    cursor.style.top = `${clientY - top - currentSize / 2}px`;
+    cursor.style.left = `${clientX - left - currentSize / 2}px`;
 
     if (!action === 'ERASER') {
         cursor.style.backgroundColor = currentColor;
@@ -355,7 +539,6 @@ function removeCursor() {
 }
 
 function changePermission(disabled) {
-    pencilText.disabled = disabled;
     pencilColor.disabled = disabled;
     colorsElement.disabled = disabled;
     undoElement.disabled = disabled;
@@ -368,8 +551,6 @@ function changePermission(disabled) {
 function createCanvasEvents() {
     cursorElement = document.getElementById('cursor');
 
-    ctx = canvas.getContext('2d', { willReadFrequently: true });
-
     if (ctx) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, 800, 600);
@@ -377,26 +558,16 @@ function createCanvasEvents() {
 
     size.onchange = changeSize;
 
-    pencil.onclick = function () {
-        setEraser(false);
-    };
-
     eraser.onclick = function () {
         setEraser(true);
+
+        shape = 'NORMAL';
     };
-
-    pencilText.addEventListener('input', function (e) {
-        changeColor(this);
-
-        pencilColor.value = this.value;
-    });
 
     pencilColor.addEventListener('input', function (e) {
         if (!playing) return;
 
         changeColor(this);
-
-        pencilText.value = this.value;
     });
 
     colorsElement.onclick = function (e) {
@@ -404,45 +575,48 @@ function createCanvasEvents() {
         if (!e.target.hasAttribute('data-color')) return;
 
         changeColor(e.target);
-        pencilColor.value = e.target.getAttribute('data-color');
-        pencilText.value = e.target.getAttribute('data-color');
     };
 
     undoElement.onclick = undo;
 
     redoElement.onclick = redo;
 
-    canvas.onmousedown = function (e) {
+    canvasOverlay.onmousedown = function (e) {
         if (!playing) return;
 
         lastX = e.offsetX;
         lastY = e.offsetY;
+        startX = lastX;
+        startY = lastY;
+
         startDrawn();
         draw(lastX, lastY);
-        createCursor(cursorElement, e);
+        updateCursor(cursorElement, e);
     };
 
-    canvas.onmouseup = stopDrawn;
+    canvasOverlay.onmouseup = stopDrawn;
 
-    canvas.onmousemove = function (e) {
+    canvasOverlay.onmousemove = function (e) {
         if (!playing) return;
 
         const x = e.offsetX;
         const y = e.offsetY;
         draw(x, y);
-        createCursor(cursorElement, e);
+        updateCursor(cursorElement, e);
     };
 
-    canvas.onmouseover = function (e) {
+    canvasOverlay.onmouseover = function (e) {
+        if (!playing) return;
+
         cursorElement.style.display = 'block';
     };
 
-    canvas.onmouseleave = function (e) {
+    canvasOverlay.onmouseleave = function (e) {
         cursorElement.style.display = 'none';
-        stopDrawn();
+        stopDrawn(e);
     };
 
-    canvas.onclick = function (e) {
+    canvasOverlay.onclick = function (e) {
         if (!playing) return;
 
         if (action === 'BUCKET') {
@@ -454,7 +628,7 @@ function createCanvasEvents() {
             floodFill(e.offsetX, e.offsetY, color_to_rgba(currentColor));
 
             sendDrawn([{
-                c: bucketColor,
+                c: currentColor,
                 s: 0,
                 a: 'BUCKET',
                 data: [{ x: e.offsetX, y: e.offsetY }]
@@ -468,7 +642,203 @@ function createCanvasEvents() {
         if (!playing) return;
 
         action = 'BUCKET';
+        shape = 'NORMAL';
     });
+
+    pencil.onclick = function () {
+        if (!playing) return;
+
+        action = 'DRAW';
+        shape = 'NORMAL';
+
+        setEraser(false);
+    };
+
+    $('#line').on('click', function () {
+        if (!playing) return;
+
+        shape = 'LINE';
+    });
+
+    $('#square-regular').on('click', function () {
+        if (!playing) return;
+
+        shape = 'SQUARE';
+    });
+
+    $('#square-solid').on('click', function () {
+        if (!playing) return;
+
+        shape = 'SQUARE_SOLID';
+    });
+
+    $('#circle-regular').on('click', function () {
+        if (!playing) return;
+
+        shape = 'CIRCLE';
+    });
+
+    $('#circle-solid').on('click', function () {
+        if (!playing) return;
+
+        shape = 'CIRCLE_SOLID';
+    });
+
+    $('#clear').on('click', function () {
+        if (!playing) return;
+
+        shape = 'NORMAL';
+        action = 'DRAW';
+
+        clearCanvas();
+        sendDrawn([
+            {
+                c: '#ffffff',
+                s: 0,
+                a: 'FILL',
+                data: []
+            }
+        ]);
+    });
+}
+
+function drawAll(data) {
+    for (const chunk of data.history) {
+        receiveDrawn({ history: chunk });
+    }
+}
+
+function clearCanvas() {
+    if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 800, 600);
+
+        undo_list = [];
+        redo_list = [];
+        historyData = [];
+    }
+}
+
+function playerPlaying(data) {
+    playing = data.playing;
+
+    if (!playing) {
+        [undo_list, redo_list] = [[], []];
+        historyData = [];
+        setEraser(false);
+        removeCursor();
+    }
+
+    changePermission(!playing);
+
+    if (!("player" in data)) return;
+
+    const player = data.player;
+
+    const playerCard = document.querySelector('.players').querySelector(`[data-player="${player.name}"]`);
+
+    if (!playerCard) return;
+
+    const players = document.querySelector('.players').querySelectorAll('.player-card');
+
+    players.forEach(element => {
+        element.classList.remove('playing');
+    });
+
+    playerCard.classList.add('playing');
+}
+
+function addPlayer(data) {
+    if (!("player" in data)) return;
+
+    if (users.find(userData => userData.name === data.player.name)) {
+        updatePlayer(data);
+        return;
+    }
+
+    users.push(data.player);
+
+    const playerCard = document.createElement('div');
+    playerCard.classList.add('player-card');
+
+    const img = document.createElement('img');
+    img.src = `https://hubbe.biz/avatar/${data.player.name}?headonly=1`;
+
+    const spans = document.createElement('div');
+    spans.classList.add('spans-card');
+
+    const name = document.createElement('span');
+    name.textContent = data.player.name;
+
+    const points = document.createElement('span');
+    points.textContent = `${data.player.points} pontos`;
+
+    playerCard.dataset.player = data.player.name;
+
+    spans.appendChild(name);
+    spans.appendChild(points);
+
+    playerCard.appendChild(img);
+    playerCard.appendChild(spans);
+
+    img.onload = function () {
+        document.querySelector('.players').appendChild(playerCard);
+    }
+}
+
+function addPlayers(data) {
+    if (!("players" in data)) return;
+
+    const players = data.players;
+
+    players.forEach(player => {
+        addPlayer({ player });
+    });
+
+}
+
+function updatePlayer(data) {
+    if (!("player" in data)) return;
+
+    const player = data.player;
+
+    const playerCard = document.querySelector('.players').querySelector(`[data-player="${player.name}"]`);
+
+    if (!playerCard) return;
+
+    const spans = playerCard.querySelector('.spans-card');
+
+    const name = spans.querySelector('span');
+    const points = spans.querySelector('span:last-child');
+
+    name.textContent = player.name;
+    points.textContent = `${player.points} pontos`;
+}
+
+function removePlayer(data) {
+    if (!("player" in data)) return;
+
+    const player = data.player;
+
+    const playerCard = document.querySelector('.players').querySelector(`[data-player="${player.name}"]`);
+
+    if (!playerCard) return;
+
+    playerCard.remove();
+
+    users = users.filter(user => user.name !== player.name);
+}
+
+function updatePlayerScore(data) {
+    if (!("player" in data)) return;
+
+    const player = data.player;
+
+    const playerCard = document.querySelector('.players').querySelector(`[data-player="${player.name}"]`);
+
+    if (!playerCard) return;
+
+    playerCard.classList.add('scored');
 }
 
 function Paint(scriptName) {
@@ -525,36 +895,14 @@ function Paint(scriptName) {
     const handler = new Paint('paint');
 
     handler.on('draw', receiveDrawn);
-
-    handler.on('drawAll', function (data) {
-        for (const chunk of data.history) {
-            receiveDrawn({ history: chunk });
-        }
-    });
-
-    handler.on('clear', function (data) {
-        if (ctx) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 800, 600);
-
-            undo_list = [];
-            redo_list = [];
-            historyData = [];
-        }
-    });
-
-    handler.on('playing', function (data) {
-        playing = data.playing;
-
-        if (!playing) {
-            [undo_list, redo_list] = [[], []];
-            historyData = [];
-            setEraser(false);
-            removeCursor();
-        }
-
-        changePermission(!playing);
-    });
+    handler.on('drawAll', drawAll);
+    handler.on('clear', clearCanvas);
+    handler.on('playing', playerPlaying);
+    handler.on('addPlayer', addPlayer);
+    handler.on('addPlayers', addPlayers);
+    handler.on('updatePlayer', updatePlayer);
+    handler.on('removePlayer', removePlayer);
+    handler.on('playerScore', updatePlayerScore);
 
     handler.on('undo', function (data) {
         if (ctx && "undo" in data) {
@@ -572,6 +920,7 @@ function Paint(scriptName) {
 
     $('#script-events').on('uiMessage', handler.emit);
     $('#script-events').on('dispose', handler.dispose);
+    $('.scoreboard').css({"maxHeight": `${canvas.height}px` });
 
     window.sendScriptMessage('paint-ready', {});
 
