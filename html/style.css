@@ -43,12 +43,13 @@
 
 .toolbar {
     background: #f3f3f3;
-    width: 200px;
+    width: 125px;
     border: 1px solid #000000;
     border-radius: 15px;
     overflow-y: auto;
     position: absolute;
     left: 0;
+    box-shadow: #000000 0px 0px 10px;
 }
 
 .toolbar .toolbar__item {
@@ -110,7 +111,7 @@
 }
 
 .toolbar .toolbar__item .color-div>label .text-input {
-    width: 80%;
+    width: 100%;
     height: 30px;
     padding: 0 30px 0 5px;
     border: 1px solid #b0b0b0;
@@ -125,7 +126,7 @@
 .toolbar .toolbar__item .color-div>label .color-input {
     position: absolute;
     top: 5px;
-    right: 25px;
+    right: 15px;
     width: 20px;
     height: 20px;
     border-radius: 15px;
@@ -178,4 +179,8 @@
 
 .opacity-hidden {
     transition: opacity 0.3s;
+}
+
+#size {
+    width: 100px;
 }

@@ -163,9 +163,8 @@ function is_in_pixel_stack(x, y, pixel_stack) {
     return false;
 }
 
-// adapted from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
 function color_to_rgba(color) {
-    if (color[0] == "#") { // hex notation
+    if (color[0] == "#") {
         color = color.replace("#", "");
         var bigint = parseInt(color, 16);
         var r = (bigint >> 16) & 255;
@@ -177,7 +176,7 @@ function color_to_rgba(color) {
             b: b,
             a: 255
         };
-    } else if (color.indexOf("rgba(") == 0) { // already in rgba notation
+    } else if (color.indexOf("rgba(") == 0) {
         color = color.replace("rgba(", "").replace(" ", "").replace(")", "").split(",");
         return {
             r: color[0],
@@ -484,9 +483,7 @@ function Paint(scriptName) {
         const eventData = event.detail;
 
         if (!eventData) return;
-
-        console.log(eventData.name);
-
+        
         const value = eventData.data;
         const exec = this.events.get(eventData.name);
         let data = value;
