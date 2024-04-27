@@ -2,7 +2,6 @@ import themes from "./themes.js";
 import words from "./words.js";
 
 export default class Gartic {
-    #player = null;
     #lastData = [];
     #redoData = [];
     #undoData = [];
@@ -10,16 +9,6 @@ export default class Gartic {
     #theme = "";
 
     constructor() { }
-
-    getCurrentPlayer() {
-        if (!this.#player) return null;
-
-        return this.#player;
-    }
-
-    setCurrentPlayer(player) {
-        this.#player = player;
-    }
 
     getLastData() {
         return this.#lastData;
@@ -39,6 +28,14 @@ export default class Gartic {
 
     getWord() {
         return this.#word;
+    }
+
+    clearLastData() {
+        this.#lastData = [];
+    }
+
+    clearRedoData() {
+        this.#redoData = [];
     }
 
     setTheme(theme) {
