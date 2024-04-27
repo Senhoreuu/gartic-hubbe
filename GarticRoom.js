@@ -7,6 +7,9 @@ export default class GarticRoom extends Gartic {
     #players = new Map();
     #round = 0;
     #ownerId = 0;
+    #time = 0;
+    #currentPlayer;
+    #delays = new Map();
 
     constructor(ownerId) {
         super();
@@ -18,6 +21,16 @@ export default class GarticRoom extends Gartic {
 
     getId() {
         return this.#id;
+    }
+
+    getCurrentPlayer() {
+        if (!this.#currentPlayer) return null;
+
+        return this.#currentPlayer;
+    }
+
+    setCurrentPlayer(player) {
+        this.#currentPlayer = player;
     }
 
     getPlayers() {
@@ -86,5 +99,30 @@ export default class GarticRoom extends Gartic {
             }
             catch (e) { }
         });
+    }
+
+    startTime() {
+        if (this.#delays.has('time')) return;
+        const delay =
+            Delay.wait(() => {
+                this.#time--;
+            }, 2);
+
+        this.#delays.set('time', delay);
+    }
+
+    stopTime() {
+        if (!this.#delays.has('time')) return;
+
+        Delay.cancel(this.#delays.get('time'));
+        this.#delays.delete('time');
+    }
+
+    resetTime() {
+        this.#time = 60;
+    }
+
+    getTime() {
+        return this.#time;
     }
 }
