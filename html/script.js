@@ -1130,6 +1130,23 @@
             $('#guess-text').val('');
         });
 
+        $("#leave").on('click', function () {
+            if (this.value === 'Abandonar Partida') {
+                this.value = 'Confirmar';
+                this.classList.add('confirm');
+                return;
+            }
+
+            window.sendScriptMessage('leave', {});
+            this.value = 'Abandonar Partida';
+            this.classList.remove('confirm');
+            clearAll();
+            $('#guess-text').val('');
+            $("#players").empty();
+            changePermission(true);
+            $(".container-canvas").hide();
+        });
+
         window.sendScriptMessage('paint-ready', {});
 
         $(".container-canvas").draggable({ scroll: false, handle: ".cursor-move" });
