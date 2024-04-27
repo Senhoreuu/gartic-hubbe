@@ -34,7 +34,9 @@ events.set('paint-ready', (entity) => {
 
     const name = entity.getUsername();
 
-    const players = garticRoom.getPlayers().map(p => ({ player: p, name: p.getName(), points: p.getPoints(), isPlaying: garticRoom.getCurrentPlayer() && garticRoom.getCurrentPlayer().getId() === p.getId() })).sort((a, b) => b.points - a.points);
+    const players = garticRoom.getPlayers()
+        .map(p => ({ player: p, name: p.getName(), points: p.getPoints(), isPlaying: garticRoom.getCurrentPlayer() && garticRoom.getCurrentPlayer().getId() === p.getId() }))
+        .sort((a, b) => b.points - a.points);
 
     players.forEach(data => {
         if (data.name === name) return;
@@ -136,23 +138,6 @@ events.set('guess', (entity, data) => {
     garticRoom.sendUIMessage('updatePlayer', { player: { name: garticRoom.getCurrentPlayer().getName(), points: `+ ${garticRoom.getCurrentPlayer().getPoints()}` } });
 });
 
-// Commands.register('paint', true, (user) => {
-//     const player = garticRoom.getPlayers().get(user.getPlayerId());
-
-//     if (!player) return;
-
-//     garticRoom.getCurrentPlayer() = player;
-//     user.sendUIMessage('playing', JSON.stringify({ playing: true, player: { name: player.getName() } }));
-//     garticRoom.getLastData().length = 0;
-
-//     garticRoom.getPlayers().forEach((player) => {
-//         player.sendUIMessage('clear', "");
-//         if (player.equals(user)) return;
-
-//         player.sendUIMessage('playing', JSON.stringify({ playing: false, player: { name: user.getUsername() } }));
-//     });
-// });
-
 Commands.register(':start', true, (user, message) => {
     if (!user.hasRank(98)) return;
 
@@ -188,8 +173,6 @@ Commands.register(':start', true, (user, message) => {
 });
 
 Events.on('userJoin', (user) => {
-    // if (!user.hasRank(98)) return;
-
     user.loadUI('paint', 'index');
 
     garticRoom.addPlayer(new Player(user));
@@ -210,8 +193,8 @@ Events.on('userLeave', (user) => {
     if (garticRoom.getCurrentPlayer().getId() !== userId) return;
 
     garticRoom.setCurrentPlayer(null);
-    garticRoom.getLastData().length = 0;
-    garticRoom.getRedoData().length = 0;
+    garticRoom.clearLastData();
+    garticRoom.clearRedoData();
 });
 
 Events.on('uiMessage', emitClientEvent);
