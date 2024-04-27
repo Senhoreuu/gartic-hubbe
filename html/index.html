@@ -4,11 +4,107 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/style.css?v=%dataScript%">
+    <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/gartic-room.css?v=%dataScript%">
+    <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/root.css?v=%dataScript%">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- <link rel="stylesheet" href="gartic-room.css"> -->
+    <!-- <script src="https://kit.fontawesome.com/0556de7ff8.js" crossorigin="anonymous"></script> -->
 </head>
 
 <body>
+    <div class="gartic-menu hidden" style="position: absolute; display: none;">
+        <div class="menu-icons">
+            <div class="menu-icon" id="open-rooms">
+                <i class="fa-solid fa-bars"></i>
+            </div>
 
-    <div class="container-canvas opacity-hidden" style="position: absolute; top: 20vh;">
+            <div class="menu-icon" id="sound">
+                <i class="fa-solid fa-volume-high"></i>
+            </div>
+
+            <div class="menu-icon" id="info">
+                <i class="fa-solid fa-info"></i>
+            </div>
+        </div>
+
+        <div class="rooms hidden" id="rooms">
+            <div class="rooms-container">
+                <div class="rooms-header">
+                    <div class="rooms-title">Salas</div>
+                    <div class="rooms-close">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
+                </div>
+                <div class="rooms-list">
+                    <div class="room">
+                        <div class="room-name">Sala 1</div>
+                        <div class="room-players">2/8</div>
+                    </div>
+                    <div class="room">
+                        <div class="room-name">Sala 2</div>
+                        <div class="room-players">4/8</div>
+                    </div>
+                    <div class="room">
+                        <div class="room-name">Sala 3</div>
+                        <div class="room-players">6/8</div>
+                    </div>
+                    <div class="room">
+                        <div class="room-name">Sala 4</div>
+                        <div class="room-players">8/8</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sound hidden" id="sound">
+            <div class="sound-container">
+                <div class="sound-header">
+                    <div class="sound-title">Som</div>
+                    <div class="sound-close">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
+                </div>
+                <div class="sound-list">
+                    <div class="sound-item">
+                        <div class="sound-name">Música</div>
+                        <div class="sound-toggle">
+                            <div class="sound-toggle__item active">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="sound-toggle__item">
+                                <i class="fa-solid fa-times"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sound-item">
+                        <div class="sound-name">Efeitos</div>
+                        <div class="sound-toggle">
+                            <div class="sound-toggle__item active">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="sound-toggle__item">
+                                <i class="fa-solid fa-times"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="info hidden" id="info">
+            <div class="info-container">
+                <div class="info-header">
+                    <div class="info-title">Informações</div>
+                    <div class="info-close">
+                        <i class="fa-solid fa-times"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-canvas opacity-hidden" style="position: absolute; top: 20vh; display: flex;">
         <div class="canvas-header">
             <div class="cursor-move">
                 <p>Pressione para arrastar</p>
@@ -19,85 +115,55 @@
             <div class="tools-gartic">
                 <div class="toolbar">
                     <div class="toolbar__item">
-                        <a class="toolbar__button" id="pencil">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="eraser">
-                            <i class="fas fa-eraser"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="bucket">
-                            <i class="bucket fa-solid fa-fill-drip"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="clear">
-                            <i class="fas fa-trash-alt"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="square-regular">
-                            <i class="fa-regular fa-square"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="square-solid">
-                            <i class="fa-solid fa-square"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="circle-regular">
-                            <i class="fa-regular fa-circle"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="circle-solid">
-                            <i class="fa-solid fa-circle"></i>
-                        </a>
-
-                        <a class="toolbar__button" id="line">
-                            <i class="fa-solid fa-minus"></i>
-                        </a>
-
-                        <a href="" class="toolbar__button" id="save">
-                            <i class="fa-solid fa-download"></i>
-                        </a>
-
-                        <div class="size-div">
-                            <input type="range" max="50" min="1" value="3" id="size">
-                        </div>
-
-                        <a class="toolbar__button" id="undo">
-                            <i class="fas fa-undo"></i>
-                        </a>
-                        <a class="toolbar__button" id="redo">
-                            <i class="fas fa-redo"></i>
-                        </a>
                     </div>
 
                     <div class="toolbar__item" id="colors">
-                        <div class="color" style="background: #000000" data-color="#000000"></div>
-                        <div class="color" style="background: #ffffff" data-color="#ffffff"></div>
-                        <div class="color" style="background: #ff0000" data-color="#ff0000"></div>
-                        <div class="color" style="background: #00ff00" data-color="#00ff00"></div>
-                        <div class="color" style="background: #0000ff" data-color="#0000ff"></div>
-                        <div class="color" style="background: #ffff00" data-color="#ffff00"></div>
-                        <div class="color" style="background: #00ffff" data-color="#00ffff"></div>
-                        <div class="color" style="background: #ff00ff" data-color="#ff00ff"></div>
-                        <div class="color" style="background: #c0c0c0" data-color="#c0c0c0"></div>
-                        <div class="color" style="background: #808080" data-color="#808080"></div>
-
+                    </div>
+                    <div class="toolbar__item">
                         <div class="color-div">
-                            <input type="color" value="#000000" class="color-input">
+                            <input type="color" value="#000000" class="color-input" id="colorpicker">
+                            <i class="fa-solid fa-eye-dropper eyedropper"></i>
+                        </div>
+                    </div>
+                    <div class="toolbar__item">
+                        <div class="recentColors-title">Ultimas cores</div>
+                        <div id="recentColors">
+                            <div class="color" style="background: #B8B8B8" data-color="#B8B8B8"></div>
+                            <div class="color" style="background: #B8B8B8" data-color="#B8B8B8"></div>
+                            <div class="color" style="background: #B8B8B8" data-color="#B8B8B8"></div>
+                            <div class="color" style="background: #B8B8B8" data-color="#B8B8B8"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="canvas-game">
-                <div class="canvas-container" style="position: relative; width:800px; height:600px;">
-                    <canvas class="canvas-container" width="800" height="600" id="canvas"
+            <div class="canvas-game" style="height: 600px">
+                <div class="timer-container hidden">
+                    <!-- progress line bar -->
+                    <div class="timer">
+                        <span class="timer_progress">
+                        </span>
+                    </div>
+                </div>
+                <div class="canvas-container cursor-crosshair"
+                    style="position: relative; width:800px; height:550px;border-radius: 5px">
+                    <canvas class="canvas-container" width="800" height="550" id="canvas"
                         style="position: absolute;"></canvas>
-                    <canvas class="canvas-container" width="800" height="600" id="canvas-overlay"
+                    <canvas class="canvas-container" width="800" height="550" id="canvas-overlay"
                         style="position: absolute; background-color: transparent;"></canvas>
                 </div>
                 <div class="mouse-follow" id="cursor"></div>
+                <div class="game-actions">
+                    <div class="hint-container">
+                        <div class="hint-title">Tema: <span id="theme"></span></div>
+                        <div class="hint-text" id="word"></div>
+                    </div>
+                    <div class="guess-container">
+                        <input id="guess-text" class="guess-text" type="text" placeholder="Insira seu palpite..." />
+                        <div id="send-guess" class="btn btn-success">Enviar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="scoreboard">
@@ -113,9 +179,76 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdn.hubbe.biz/scripts/paint/script.js?v=%dataScript%"></script>
+        <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+        <script src="https://cdn.hubbe.biz/scripts/paint/script.js?v=%dataScript%"></script>
+        <script src="https://cdn.hubbe.biz/scripts/paint/gartic-room.js?v=%dataScript%"></script>
+        <!-- <script src="gartic-room.js"></script> -->
+        <script>
+            function keyPress(event) {
+                if (event.keyCode === 90 && event.ctrlKey) {
+                    $('#undo').click();
+                }
+
+                if (event.keyCode === 89 && event.ctrlKey) {
+                    $('#redo').click();
+                }
+
+                if (event.keyCode === 13) {
+                    $('#send-guess').click();
+                }
+            }
+
+            function KeypressEventEmitter(scriptName) {
+                this.events = new Map();
+                this.scriptName = scriptName;
+
+                this.on = (eventName, callback) => {
+                    this.events.set(eventName, callback);
+                };
+
+                this.emit = event => {
+                    const eventData = event.detail;
+                    const value = eventData.data;
+                    const exec = this.events.get(eventData.name);
+
+                    if (exec) {
+                        exec(value);
+                    }
+                };
+
+                this.dispose = (event) => {
+                    if (!event) return;
+
+                    const data = event.detail;
+
+                    const exec = this.events.get('dispose');
+
+                    if (exec) {
+                        exec();
+                    }
+
+                    if (data.allScripts || data.scriptName === this.scriptName) {
+                        this.events.clear();
+
+                        $(document).off('keydown', keyPress);
+
+                        $('#script-events').off('uiMessage', this.emit);
+                        $('#script-events').off('dispose', this.dispose);
+                    }
+                };
+            }
+
+            (() => {
+                const handler = new KeypressEventEmitter('keypress');
+
+                $('#script-events').on('uiMessage', handler.emit);
+                $('#script-events').on('dispose', handler.dispose);
+
+
+                $(document).on('keydown', keyPress);
+            })();
+        </script>
 </body>
 
 </html>

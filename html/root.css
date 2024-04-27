@@ -1,0 +1,10 @@
+:root {
+    --menu-position-top: 155px;
+    --menu-position-left: 10px;
+    --rooms-position-top: 50px;
+    --rooms-position-left: 4px;
+    --sound-position-top: 60px;
+    --sound-position-left: revert-layer;
+    --info-position-top: 60px;
+    --info-position-left: -145px;
+}

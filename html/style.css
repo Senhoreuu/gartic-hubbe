@@ -34,7 +34,14 @@
 .canvas-container {
     display: flex;
     align-items: center;
+}
+
+.cursor-crosshair {
     cursor: crosshair;
+}
+
+.cursor-bucket {
+    cursor: url("https://cdn-icons-png.flaticon.com/512/104/104678.png"), auto;
 }
 
 .canvas .alert {
@@ -44,13 +51,25 @@
 .toolbar {
     width: 125px;
     height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .toolbar .toolbar__item {
-    padding: 10px 20px;
+    padding: 10px 15px;
     text-align: center;
     cursor: pointer;
+}
+
+.recent_colors {
+    display: flex;
+}
+
+.recent_colors .recent_color {
+    width: 15px;
+    height: 15px;
+    border-radius: 5px;
 }
 
 .toolbar .toolbar__item a {
@@ -99,19 +118,23 @@
 
 .toolbar .toolbar__item .color-div {
     width: 100%;
-    height: 100%;
     padding: 0 5px;
-    margin-top: 10px;
+    position: relative;
 }
 
 .toolbar .toolbar__item .color-div .color-input {
     width: 75px;
     height: 30px;
     padding: 0;
+    position: relative;
+    outline: none;
+    border: none;
+    appearance: none;
+    border-radius: 3px;
 }
 
 .canvas .canvas-container {
-    height: 600px;
+    height: 550px;
     width: 800px;
     overflow: hidden;
 }
@@ -139,6 +162,9 @@
 .canvas {
     display: flex;
     justify-content: center;
+    padding: 15px 0px;
+    background-color: rgba(28, 30, 34, 0.95);
+    border-radius: 5px;
 }
 
 .canvas-header {
@@ -170,14 +196,12 @@
 }
 
 .players::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    border-left: 4px solid rgba(28, 30, 34, .95);
+    border-left: 4px solid rgba(28, 30, 34, 0.55);
 }
 
 .players::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
-    border-left: 4px solid rgba(28, 30, 34, .95);
+    border-left: 4px solid rgba(28, 30, 34, 0.85);
 }
 
 .players-container {
@@ -185,7 +209,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 7px;
+    padding: 0px 7px;
     gap: 5px;
     justify-content: space-between;
 }
@@ -195,7 +219,7 @@
     flex-direction: column;
     gap: 5px;
     overflow-y: auto;
-    max-height: 90%;
+    max-height: calc(100% - 50px);
 }
 
 .player-card {
@@ -233,22 +257,77 @@
     width: 100%;
 }
 
-.scoreboard {
-    background: rgba(28, 30, 34, .95);
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-}
-
-.tools-gartic {
-    background: rgba(28, 30, 34, .95);
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-}
-
 .scored {
     background: rgba(54, 231, 69, 0.95);
 }
 
 .playing {
     background: rgba(74, 126, 238, 0.95);
+}
+
+.canvas-game {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+    flex-direction: column;
+}
+
+.guess-container {
+    display: flex;
+    gap: 5px
+}
+
+.game-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.guess-text {
+    width: 252px;
+    padding: 0px 15px;
+    outline: none;
+    border-radius: 5px;
+    border: none;
+}
+
+.eyedropper {
+    position: absolute;
+    top: 7px;
+    left: 45%;
+}
+
+.hint-title {
+    font-weight: 700;
+}
+
+.recentColors-title {
+    font-size: 11px;
+    margin-bottom: 3px;
+    font-family: 'Inter';
+    text-transform: capitalize;
+}
+
+.timer-container {
+    position: absolute;
+    top: 35px;
+    width: 800px;
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+}
+
+.timer {
+    width: 100%;
+    height: 10px;
+    background-color: #FFEDCE;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.timer_progress {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background-color: #FFA000;
 }

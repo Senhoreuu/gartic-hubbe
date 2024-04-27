@@ -1,0 +1,208 @@
+.gartic-menu {
+    position: absolute;
+    top: var(--menu-position-top);
+    left: var(--menu-position-left);
+    width: 100px;
+    height: 35px;
+    background-color: rgba(28, 30, 34, .95);
+    z-index: 999;
+}
+
+.menu-icons {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    color: white;
+    gap: 15px;
+}
+
+.menu-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.menu-icon:hover {
+    color: #68c8ce;
+}
+
+.rooms {
+    position: absolute;
+    top: var(--rooms-position-top);
+    left: var(--rooms-position-left);
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 999;
+}
+
+.rooms-container {
+    background-color: rgba(28, 30, 34, .95);
+    color: white;
+}
+
+.rooms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #000;
+}
+
+.rooms-title {
+    font-size: 20px;
+}
+
+.rooms-close {
+    cursor: pointer;
+}
+
+.rooms-list {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+
+.room {
+    width: 100px;
+    height: 100px;
+    border: 1px solid #000;
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.room-name {
+    font-size: 20px;
+}
+
+.room-players {
+    font-size: 16px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.sound {
+    position: absolute;
+    top: var(--sound-position-top);
+    right: var(--sound-position-left);
+    z-index: 100;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.sound-container {
+    padding: 10px;
+}
+
+.sound-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.sound-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.sound-close {
+    cursor: pointer;
+}
+
+.sound-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.sound-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.sound-name {
+    font-size: 16px;
+}
+
+.sound-toggle {
+    display: flex;
+}
+
+.sound-toggle__item {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.sound-toggle__item.active {
+    background: #f1f1f1;
+}
+
+.info {
+    position: absolute;
+    top: var(--info-position-top);
+    right: var(--info-position-left);
+    z-index: 100;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.info-container {
+    padding: 10px;
+}
+
+.info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.info-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.info-close {
+    cursor: pointer;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-content__item {
+    margin-bottom: 10px;
+}
+
+.info-content__item-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.info-content__item-text {
+    font-size: 14px;
+}
+
+.info-content__item-text a {
+    color: #007bff;
+    text-decoration: none;
+}

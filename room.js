@@ -1,57 +1,11 @@
+import GarticRoom from "./GarticRoom.js";
+import Player from "./Player.js";
+import themes from "./themes.js";
+import words from "./words.js";
+
 const events = new Map();
 
-const game = {
-    player: 0,
-    players: new Map(),
-    lastData: [],
-    redoData: []
-};
-
-class Player {
-    #name;
-    #id;
-    #points;
-    #entity;
-
-    constructor(user) {
-        this.#name = user.getUsername();
-        this.#id = user.getPlayerId();
-        this.#points = 0;
-        this.#entity = user;
-    }
-
-    getName() {
-        return this.#name;
-    }
-
-    getId() {
-        return this.#id;
-    }
-
-    getPoints() {
-        return this.#points;
-    }
-
-    getEntity() {
-        return this.#entity;
-    }
-
-    updatePoints(value) {
-        this.#points += value;
-    }
-
-    equals(entity) {
-        return this.#id === entity.getPlayerId();
-    }
-
-    sendUIMessage(event, value) {
-        this.#entity.sendUIMessage(event, value);
-    }
-
-    notification(type, message) {
-        this.#entity.notification(type, message);
-    }
-}
+const garticRoom = new GarticRoom(2019);
 
 const emitClientEvent = (entity, eventName, value) => {
     const exec = events.get(eventName);
@@ -61,55 +15,58 @@ const emitClientEvent = (entity, eventName, value) => {
     }
 };
 
-Events.on('userJoin', (user) => {
-    // if (!user.hasRank(98)) return;
+function getRandomTheme() {
+    return themes[Math.floor(Math.random() * themes.length)];
+}
 
-    user.loadUI('paint', 'index');
+function randomWord(theme) {
+    if (!theme) return "";
 
-    game.players.set(user.getPlayerId(), new Player(user));
-});
+    const wordsList = words[theme];
 
-Events.on('userLeave', (user) => {
-    const id = user.getPlayerId();
-    const player = game.players.get(id);
+    if (!wordsList) return "";
 
-    if (!player) return;
-
-    game.players.delete(player.getId());
-
-    if (game.player === player.getId()) {
-        game.player = 0;
-        game.lastData.length = 0;
-        game.redoData.length = 0;
-    }
-
-    game.players.forEach(player => {
-        player.sendUIMessage('removePlayer', JSON.stringify({ player: { name: player.getName() } }));
-    });
-});
+    return wordsList[Math.floor(Math.random() * wordsList.length)];
+}
 
 events.set('paint-ready', (entity) => {
-    const players = [...game.players.values()].map(p => ({ name: p.getName(), points: p.getPoints() })).sort((a, b) => b.points - a.points);
-    game.players.forEach(player => {
-        player.sendUIMessage('addPlayers', JSON.stringify({ players }));
+    if (!garticRoom.getTotalPlayers()) return;
+
+    const name = entity.getUsername();
+
+    const players = garticRoom.getPlayers().map(p => ({ player: p, name: p.getName(), points: p.getPoints(), isPlaying: garticRoom.getCurrentPlayer() && garticRoom.getCurrentPlayer().getId() === p.getId() })).sort((a, b) => b.points - a.points);
+
+    players.forEach(data => {
+        if (data.name === name) return;
+
+        data.player.sendUIMessage('addPlayer', { player: { name, points: 0, isPlaying: false } });
     });
 
-    if (!game.lastData.length) return;
+    if (!garticRoom.getLastData().length) return;
 
-    entity.sendUIMessage('drawAll', JSON.stringify({ history: game.lastData }));
+    entity.sendUIMessage('loadHistory', JSON.stringify({
+        history: {
+            history: garticRoom.getLastData(),
+            theme: garticRoom.getTheme(),
+            wordLength: garticRoom.getWord().length,
+            players
+        }
+    }));
 });
 
 events.set('paint', (entity, data) => {
-    if (game.player !== entity.getPlayerId()) return;
+    if (!garticRoom.getCurrentPlayer()) return;
+
+    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
 
     if (!("history" in data) || !data.history.length) return;
 
-    game.lastData.push(data.history);
+    garticRoom.getLastData().push(data.history);
 
-    game.players.forEach(player => {
+    garticRoom.getPlayers().forEach(player => {
         if (player.equals(entity)) return;
 
-        player.sendUIMessage('draw', JSON.stringify({ history: data.history }));
+        player.sendUIMessage('draw', { history: data.history });
     });
 });
 
@@ -122,47 +79,139 @@ events.set('notification', (entity, data) => {
 });
 
 events.set('undo', (entity, data) => {
-    if (game.player !== entity.getPlayerId()) return;
+    if (!garticRoom.getCurrentPlayer()) return;
 
-    if (!game.lastData.length) return;
+    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
 
-    game.redoData.push(game.lastData.pop());
+    if (!garticRoom.getLastData().length) return;
 
-    game.players.forEach(player => {
+    garticRoom.getRedoData().push(garticRoom.getLastData().pop());
+
+    garticRoom.getPlayers().forEach(player => {
         if (player.equals(entity)) return;
 
         player.sendUIMessage('clear', "");
-        player.sendUIMessage('drawAll', JSON.stringify({ history: game.lastData }));
+        player.sendUIMessage('drawAll', { history: garticRoom.getLastData() });
     });
 });
 
 events.set('redo', (entity, data) => {
-    if (game.player !== entity.getPlayerId()) return;
+    if (!garticRoom.getCurrentPlayer()) return;
 
-    if (!game.redoData.length) return;
+    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
 
-    game.lastData.push(game.redoData.pop());
+    if (!garticRoom.getRedoData().length) return;
 
-    game.players.forEach(player => {
+    garticRoom.getLastData().push(garticRoom.getRedoData().pop());
+
+    garticRoom.getPlayers().forEach(player => {
         if (player.equals(entity)) return;
 
         player.sendUIMessage('clear', "");
-        player.sendUIMessage('drawAll', JSON.stringify({ history: game.lastData }));
+        player.sendUIMessage('drawAll', { history: garticRoom.getLastData() });
     });
 });
 
-Commands.register('paint', true, (user) => {
-    const name = user.getUsername();
-    game.player = user.getPlayerId();
-    user.sendUIMessage('playing', JSON.stringify({ playing: true, player: { name } }));
-    game.lastData.length = 0;
+events.set('guess', (entity, data) => {
+    if (!("word" in data) || !garticRoom.getCurrentPlayer()) return;
 
-    game.players.forEach((player) => {
-        player.sendUIMessage('clear', "");
-        if (player.equals(user)) return;
+    const player = garticRoom.getPlayer(entity);
 
-        player.sendUIMessage('playing', JSON.stringify({ playing: false, player: { name } }));
+    if (!player || garticRoom.getCurrentPlayer().getId() === player.getId()) return;
+
+    const word = data.word;
+    const correct = garticRoom.isCorrectWord(word);
+
+    if (!correct) return;
+
+    if (player.scored()) return;
+
+    player.setScored(true);
+
+    garticRoom.getCurrentPlayer().updatePoints(1);
+    player.updatePoints(1);
+    player.notification('generic', `Parabéns! Você acertou a palavra!`);
+
+    garticRoom.sendUIMessage('playerScore', { player: { name: player.getName(), points: `+ ${player.getPoints()}` } });
+    garticRoom.sendUIMessage('updatePlayer', { player: { name: garticRoom.getCurrentPlayer().getName(), points: `+ ${garticRoom.getCurrentPlayer().getPoints()}` } });
+});
+
+// Commands.register('paint', true, (user) => {
+//     const player = garticRoom.getPlayers().get(user.getPlayerId());
+
+//     if (!player) return;
+
+//     garticRoom.getCurrentPlayer() = player;
+//     user.sendUIMessage('playing', JSON.stringify({ playing: true, player: { name: player.getName() } }));
+//     garticRoom.getLastData().length = 0;
+
+//     garticRoom.getPlayers().forEach((player) => {
+//         player.sendUIMessage('clear', "");
+//         if (player.equals(user)) return;
+
+//         player.sendUIMessage('playing', JSON.stringify({ playing: false, player: { name: user.getUsername() } }));
+//     });
+// });
+
+Commands.register(':start', true, (user, message) => {
+    if (!user.hasRank(98)) return;
+
+    let theme = getRandomTheme();
+    let word = randomWord(theme);
+
+    if (!garticRoom.getTotalPlayers()) {
+        user.notification('generic', 'Não há jogadores suficientes para iniciar o jogo.');
+        return;
+    }
+
+    while (!theme || !word) {
+        theme = getRandomTheme();
+        word = randomWord(theme);
+    }
+
+    garticRoom.setTheme(theme);
+    garticRoom.setWord(word);
+
+    const players = garticRoom.getPlayers().sort(() => Math.random() - 0.5);
+
+    const player = players[0];
+
+    garticRoom.setCurrentPlayer(player);
+
+    player.notification('generic', `É a sua vez, ${player.getName()}!`);
+
+    garticRoom.getPlayers().forEach(p => {
+        p.sendUIMessage('start', { theme: theme, time: 0, wordLength: word.length, player: { name: player.getName() }, isPlaying: p.getId() === player.getId() });
     });
+
+    player.sendUIMessage('setWord', { word });
+});
+
+Events.on('userJoin', (user) => {
+    // if (!user.hasRank(98)) return;
+
+    user.loadUI('paint', 'index');
+
+    garticRoom.addPlayer(new Player(user));
+});
+
+Events.on('userLeave', (user) => {
+    const userId = user.getPlayerId();
+    const player = garticRoom.getPlayer(userId);
+
+    if (!player) return;
+
+    garticRoom.removePlayer(player);
+
+    garticRoom.sendUIMessage('removePlayer', { player: { name: player.getName() } });
+
+    if (!garticRoom.getCurrentPlayer()) return;
+
+    if (garticRoom.getCurrentPlayer().getId() !== userId) return;
+
+    garticRoom.setCurrentPlayer(null);
+    garticRoom.getLastData().length = 0;
+    garticRoom.getRedoData().length = 0;
 });
 
 Events.on('uiMessage', emitClientEvent);
