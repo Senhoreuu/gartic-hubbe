@@ -294,6 +294,8 @@ const leave = (entity) => {
 
     room.removePlayer(player);
 
+    room.updateRoomUI();
+
     room.sendUIMessage('removePlayer', { player: { name: player.getName() } });
 
     const message = `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> abandonou a partida</font>`;
@@ -301,6 +303,8 @@ const leave = (entity) => {
     room.sendUIMessage('message', { message: `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> abandonou a partida</font>` });
 
     room.addCustomMessage(message);
+
+    player.sendUIMessage(`leaveRoom-${room.getId()}`, "");
 
     if (!room.getCurrentPlayer()) return;
 

@@ -6,7 +6,6 @@ export default class GarticRoom extends Gartic {
     #id = 0;
     #players = new Map(); // { key: number, value: Player }[]
     #round = 0;
-    #ownerId = 0;
     #time = 0;
     #currentPlayer; // Player
     #lastPlayer; // Player
@@ -17,9 +16,7 @@ export default class GarticRoom extends Gartic {
     constructor(ownerId) {
         super();
 
-        this.#ownerId = ownerId;
-
-        this.#id = game.lastRoomId++;
+        this.#id = ownerId;
     }
 
     getId() {
@@ -87,7 +84,7 @@ export default class GarticRoom extends Gartic {
     }
 
     getOwnerId() {
-        return this.#ownerId;
+        return this.#id;
     }
 
     updateRoomUI() {

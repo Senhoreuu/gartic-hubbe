@@ -1278,7 +1278,11 @@
         }
 
         function leaveRoom() {
-            roomElement.classList.remove('selected');
+            const rooms = document.querySelectorAll('.room');
+
+            rooms.forEach(element => {
+                element.classList.remove('selected');
+            });
 
             $(".gartic-menu").removeClass('hidden');
             $("#rooms").removeClass('hidden');
