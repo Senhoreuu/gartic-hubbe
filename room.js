@@ -55,10 +55,11 @@ const endRound = (room) => {
 
 /**
  * @param {ScriptEntity} entity
- * @param {GarticRoom} room 
  */
-const hint = (entity, room) => {
-    if (!entity || !room || !room.getCurrentPlayer()) return;
+const hint = (entity) => {
+    const room = getRoom(entity);
+
+    if (!room || !room.getCurrentPlayer()) return;
 
     const player = room.getPlayer(entity);
 
@@ -71,10 +72,11 @@ const hint = (entity, room) => {
 
 /**
  * @param {ScriptEntity} entity
- * @param {GarticRoom} room 
  */
-const skip = (entity, room) => {
-    if (!entity || !room || !room.getCurrentPlayer()) return;
+const skip = (entity) => {
+    const room = getRoom(entity);
+
+    if (!room || !room.getCurrentPlayer()) return;
 
     const player = room.getPlayer(entity);
 
@@ -96,10 +98,11 @@ const skip = (entity, room) => {
 
 /**
  * @param {ScriptEntity} entity
- * @param {GarticRoom} room 
  */
-const denounce = (entity, room) => {
-    if (!entity || !room || !room.getCurrentPlayer()) return;
+const denounce = (entity) => {
+    const room = getRoom(entity);
+
+    if (!room || !room.getCurrentPlayer()) return;
 
     const player = room.getPlayer(entity);
 
@@ -114,10 +117,12 @@ const denounce = (entity, room) => {
 
 /**
  * @param {ScriptEntity} entity
- * @param {GarticRoom} room 
+ * @param { { word: string } } data
  */
-const guess = (entity, room, data) => {
-    if (!entity || !room || !room.getCurrentPlayer()) return;
+const guess = (entity, data) => {
+    const room = getRoom(entity);
+
+    if (!room || !room.getCurrentPlayer()) return;
 
     if (!("word" in data)) return;
 
@@ -152,9 +157,11 @@ const guess = (entity, room, data) => {
 };
 
 /**
- * @param {GarticRoom} room 
+ * @param {ScriptEntity} entity 
  */
-const undo = (room) => {
+const undo = (entity) => {
+    const room = getRoom(entity);
+
     if (!room || !room.getCurrentPlayer()) return;
 
     if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
@@ -172,9 +179,11 @@ const undo = (room) => {
 };
 
 /**
- * @param {GarticRoom} room 
+ * @param {ScriptEntity} entity 
  */
-const redo = (room) => {
+const redo = (entity) => {
+    const room = getRoom(entity);
+
     if (!room || !room.getCurrentPlayer()) return;
 
     if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
@@ -194,8 +203,11 @@ const redo = (room) => {
 /**
  * @param {ScriptEntity} player
  * @param {GarticRoom} room 
+ * @param { { index: number } } data
  */
-const chooseWord = (entity, room, data) => {
+const chooseWord = (entity, data) => {
+    const room = getRoom(entity);
+
     if (!entity || !room || !room.getCurrentPlayer()) return;
 
     const player = room.getPlayer(entity);
@@ -246,11 +258,40 @@ const sendToChat = (room, message) => {
     });
 };
 
+const draw = (entity, data) => {
+    const room = getRoom(entity);
+
+    if (!room) return;
+
+    if (!room.getCurrentPlayer()) return;
+
+    if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
+
+    if (!("history" in data) || !data.history.length) return;
+
+    room.pushLastData(data.history);
+
+    room.getPlayers().forEach(player => {
+        if (player.equals(entity)) return;
+
+        player.sendUIMessage('draw', { history: data.history });
+    });
+};
+
 /**
- * @param {Player} player 
- * @param {GarticRoom} room
+ * @param {ScriptEntity} entity
  */
-const leave = (player, room) => {
+const leave = (entity) => {
+    const userId = entity.getPlayerId();
+
+    const room = getRoom(userId);
+
+    if (!room) return;
+
+    const player = room.getPlayer(userId);
+
+    if (!player) return;
+
     room.removePlayer(player);
 
     room.sendUIMessage('removePlayer', { player: { name: player.getName() } });
@@ -316,9 +357,6 @@ function getRoom(entity) {
 }
 
 events.set('paint-ready', (entity) => {
-    const player = new Player(entity);
-    garticRoom.addPlayer(player);
-
     const rooms = [...game.rooms.values()]
         .map(room => ({ id: room.getId(), theme: room.getTheme(), totalPlayers: room.getTotalPlayers(), points: room.getHighestScore(), maxPoints: 120, maxPlayers: game.maxPlayers }));
 
@@ -327,70 +365,16 @@ events.set('paint-ready', (entity) => {
     garticRoom.updateRoomUI();
 });
 
-events.set('paint', (entity, data) => {
-    const room = getRoom(entity);
-
-    if (!room) return;
-
-    if (!room.getCurrentPlayer()) return;
-
-    if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
-
-    if (!("history" in data) || !data.history.length) return;
-
-    room.pushLastData(data.history);
-
-    room.getPlayers().forEach(player => {
-        if (player.equals(entity)) return;
-
-        player.sendUIMessage('draw', { history: data.history });
-    });
-});
-
+events.set('paint', draw);
 events.set('notification', notification);
-
-events.set('undo', (entity) => {
-    undo(getRoom(entity));
-});
-
-events.set('redo', (entity) => {
-    redo(getRoom(entity));
-});
-
-events.set('guess', (entity, data) => {
-    guess(entity, getRoom(entity), data);
-});
-
-events.set('hint', (entity) => {
-    hint(entity, getRoom(entity));
-});
-
-events.set('skip', (entity) => {
-    skip(entity, getRoom(entity));
-});
-
-events.set('denounce', (entity) => {
-    denounce(entity, getRoom(entity));
-});
-
-events.set('leave', (entity) => {
-    const room = getRoom(entity);
-
-    if (!room) return;
-
-    const userId = entity.getPlayerId();
-    const player = room.getPlayer(userId);
-
-    if (!player) return;
-
-    leave(player, room);
-});
-
-events.set('choose-word', (entity, data) => {
-    if (!("index" in data)) return;
-
-    chooseWord(entity, getRoom(entity), data);
-});
+events.set('undo', undo);
+events.set('redo', redo);
+events.set('guess', guess);
+events.set('hint', hint);
+events.set('skip', skip);
+events.set('denounce', denounce);
+events.set('leave', leave);
+events.set('choose-word', chooseWord);
 
 Commands.register(':start', true, (entity) => {
     if (!entity.hasRank(98)) return;
@@ -406,19 +390,7 @@ Events.on('userJoin', (entity) => {
     entity.loadUI('paint', 'index');
 });
 
-Events.on('userLeave', (entity) => {
-    const userId = entity.getPlayerId();
-
-    const room = getRoom(userId);
-
-    if (!room) return;
-
-    const player = room.getPlayer(userId);
-
-    if (!player) return;
-
-    leave(player, room);
-});
+Events.on('userLeave', leave);
 
 /**
  * @param {ScriptEntity} entity
