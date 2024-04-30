@@ -278,6 +278,36 @@ const draw = (entity, data) => {
     });
 };
 
+function joinRoom(entity, data) {
+    if (!("room" in data)) return;
+
+    const roomId = data.room;
+
+    if (!roomId) {
+        entity.notification('generic', 'Sala não encontrada.');
+        return;
+    }
+
+    const room = game.rooms.get(roomId);
+
+    if (!room) {
+        entity.notification('generic', 'Sala não encontrada.');
+        return;
+    }
+
+    const player = new Player(entity);
+
+    if (game.players.has(player.getId())) {
+        entity.notification('generic', 'Você já está em uma sala.');
+        return;
+    }
+
+    room.addPlayer(player);
+    game.players.set(player.getId(), roomId);
+
+    room.updateRoomUI();
+}
+
 /**
  * @param {ScriptEntity} entity
  */
@@ -292,11 +322,9 @@ const leave = (entity) => {
 
     if (!player) return;
 
-    room.removePlayer(player);
-
-    room.updateRoomUI();
-
     room.sendUIMessage('removePlayer', { player: { name: player.getName() } });
+
+    room.removePlayer(player);
 
     const message = `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> abandonou a partida</font>`;
 
@@ -379,6 +407,7 @@ events.set('skip', skip);
 events.set('denounce', denounce);
 events.set('leave', leave);
 events.set('choose-word', chooseWord);
+events.set('join', joinRoom);
 
 Commands.register(':start', true, (entity) => {
     if (!entity.hasRank(98)) return;
@@ -410,30 +439,3 @@ const emitClientEvent = (entity, eventName, value) => {
 };
 
 Events.on('uiMessage', emitClientEvent);
-Events.on('uiMessage', (entity, eventName, value) => {
-    if (!eventName.startsWith('joinRoom-')) return;
-
-    const roomId = parseInt(eventName.split('-')[1]);
-
-    if (!roomId) {
-        entity.notification('generic', 'Sala não encontrada.');
-        return;
-    }
-
-    const room = game.rooms.get(roomId);
-
-    if (!room) {
-        entity.notification('generic', 'Sala não encontrada.');
-        return;
-    }
-
-    const player = new Player(entity);
-
-    if (game.players.has(player.getId())) {
-        entity.notification('generic', 'Você já está em uma sala.');
-        return;
-    }
-
-    room.addPlayer(player);
-    game.players.set(player.getId(), roomId);
-});

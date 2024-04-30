@@ -1257,8 +1257,8 @@
         roomElement.appendChild(infosRoom);
 
         function joinRoom() {
-            if (room.totalPlayers === room.maxPlayers) return;
-
+            if (roomElement.classList.contains('full')) return;
+            
             if (!roomElement.classList.contains('selected')) {
                 const rooms = document.querySelectorAll('.room');
 
@@ -1297,15 +1297,12 @@
             infosRoom.innerHTML = `<div class="users-quantity"><i class="fa-regular fa-user"></i><span class="room-players">${newRoom.totalPlayers}/${newRoom.maxPlayers}</span></div>`;
             infosRoom.innerHTML += `<div class=""><i class="fa-solid fa-trophy"></i><span class="points">${newRoom.points}/${newRoom.maxPoints}</span></div>`;
 
-            roomElement.removeEventListener('click', joinRoom);
-
             if (newRoom.totalPlayers === newRoom.maxPlayers) {
                 roomElement.classList.add('full');
                 return;
             }
 
             roomElement.classList.remove('full');
-            roomElement.addEventListener('click', joinRoom);
         }
 
         function disposeRoom() {
@@ -1313,6 +1310,7 @@
 
             paintHandler.off(`updateRoom-${room.id}`);
             paintHandler.off(`disposeRoom-${room.id}`);
+            paintHandler.off(`leaveRoom-${room.id}`);
         }
 
         roomElement.addEventListener('click', joinRoom);

@@ -89,14 +89,22 @@ export default class GarticRoom extends Gartic {
 
     updateRoomUI() {
         Room.getAllPlayers().forEach(p => {
-            p.sendUIMessage(`updateRoom-${this.getId()}`, JSON.stringify({
-                room: {
-                    maxPlayers: game.maxPlayers,
-                    totalPlayers: this.getTotalPlayers(),
-                    points: this.getHighestScore(),
-                    maxPoints: 120
+            try {
+                if (!this.getTotalPlayers()) {
+                    p.sendUIMessage(`disposeRoom-${this.getId()}`, "");
+                    return;
                 }
-            }));
+
+                p.sendUIMessage(`updateRoom-${this.getId()}`, JSON.stringify({
+                    room: {
+                        maxPlayers: game.maxPlayers,
+                        totalPlayers: this.getTotalPlayers(),
+                        points: this.getHighestScore(),
+                        maxPoints: 120
+                    }
+                }));
+            }
+            catch (e) { }
         });
     }
 
@@ -147,9 +155,19 @@ export default class GarticRoom extends Gartic {
 
         if (this.#players.size === 0) {
             game.rooms.delete(this.#id);
+
+            this.dispose();
         }
 
         this.updateRoomUI();
+    }
+
+    dispose() {
+        this.#players.forEach(player => {
+            player.dispose();
+        });
+
+        this.#players.clear();
     }
 
     equals(room) {
