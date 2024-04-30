@@ -186,13 +186,13 @@
 
                 case 'CIRCLE':
                     ctx.beginPath();
-                    ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) + Math.pow(endY, 2)), 0, 2 * Math.PI);
+                    ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) - Math.pow(endY, 2)), 0, 2 * Math.PI);
                     ctx.stroke();
                     break;
 
                 case 'CIRCLE_SOLID':
                     ctx.beginPath();
-                    ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) + Math.pow(endY, 2)), 0, 2 * Math.PI);
+                    ctx.arc(startX, startY, Math.sqrt(Math.pow(endX, 2) - Math.pow(endY, 2)), 0, 2 * Math.PI);
                     ctx.fill();
                     break;
             }
@@ -379,7 +379,7 @@
 
                 case 'CIRCLE': {
                     ctxOverlay.beginPath();
-                    ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2)), 0, 2 * Math.PI);
+                    ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) - Math.pow(y - startY, 2)), 0, 2 * Math.PI);
                     ctxOverlay.stroke();
 
                     break;
@@ -387,7 +387,7 @@
 
                 case 'CIRCLE_SOLID': {
                     ctxOverlay.beginPath();
-                    ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2)), 0, 2 * Math.PI);
+                    ctxOverlay.arc(startX, startY, Math.sqrt(Math.pow(x - startX, 2) - Math.pow(y - startY, 2)), 0, 2 * Math.PI);
                     ctxOverlay.fill();
 
                     break;
@@ -532,7 +532,7 @@
                                     ctx.lineJoin = 'round';
                                     ctx.lineCap = 'round';
                                     ctx.beginPath();
-                                    ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) + Math.pow(coord.y, 2)), 0, 2 * Math.PI);
+                                    ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) - Math.pow(coord.y, 2)), 0, 2 * Math.PI);
                                     ctx.stroke();
                                     break;
                                 }
@@ -540,7 +540,7 @@
                                 case 'CIRCLE_SOLID': {
                                     ctx.fillStyle = color;
                                     ctx.beginPath();
-                                    ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) + Math.pow(coord.y, 2)), 0, 2 * Math.PI);
+                                    ctx.arc(coord.sx, coord.sy, Math.sqrt(Math.pow(coord.x, 2) - Math.pow(coord.y, 2)), 0, 2 * Math.PI);
                                     ctx.fill();
                                     break;
                                 }
@@ -590,12 +590,12 @@
         const {
             top,
             left,
-        } = document.querySelector('.container-canvas').getBoundingClientRect();
+        } = document.querySelector('.container-canvas').getBoundingClientRect() || { top: 0, left: 0 };
 
         const {
             clientY,
             clientX
-        } = event;
+        } = event instanceof TouchEvent ? event.touches[0] : event;
 
         cursor.style.top = `${clientY - top - currentSize / 2}px`;
         cursor.style.left = `${clientX - left - currentSize / 2}px`;
@@ -631,6 +631,126 @@
         cursorElement.style.display = 'none';
     }
 
+    function showHint(data) {
+        $('.hint').remove();
+
+        const controller = data.isPlaying;
+        const wordLength = data.wordLength;
+
+        const div = document.createElement('div');
+        div.classList.add('hint');
+        div.style.left = controller ? "40%" : '48%';
+
+        if (!controller) {
+            div.classList.add('hidden');
+        }
+
+        if (controller) {
+            const btnHint = document.createElement('input');
+            btnHint.type = 'button';
+            btnHint.classList.add('btn', 'btn-gartic');
+            btnHint.value = 'DICA';
+            btnHint.id = 'hint';
+
+            div.appendChild(btnHint);
+        }
+
+        const divTexts = document.createElement('div');
+        divTexts.classList.add('hint-texts');
+
+        if (!controller) {
+            const divTitle = document.createElement('div');
+            divTitle.classList.add('hint-title');
+            divTitle.textContent = 'Dica';
+
+            divTexts.appendChild(divTitle);
+        }
+
+        const divText = document.createElement('div');
+        divText.classList.add('hint-text');
+
+        if (controller) {
+            divText.textContent = Array(wordLength).fill('_').join(' ');
+        }
+
+        divTexts.appendChild(divText);
+
+        div.appendChild(divTexts);
+
+        if (controller) {
+            const btnSkip = document.createElement('input');
+            btnSkip.type = 'button';
+            btnSkip.classList.add('btn', 'btn-gartic');
+            btnSkip.value = 'PULAR';
+            btnSkip.id = 'skip';
+
+            div.appendChild(btnSkip);
+        }
+
+        document.querySelector('.canvas-container').appendChild(div);
+
+        if (controller) {
+            $('#hint').on('click', function () {
+                if (!playing) return;
+
+                window.sendScriptMessage('hint', {});
+            });
+
+            $("#hint").on('touchstart', function () {
+                if (!playing) return;
+
+                window.sendScriptMessage('hint', {});
+            })
+
+            $('#skip').on('click', function () {
+                if (!playing) return;
+
+                window.sendScriptMessage('skip', {});
+            });
+
+            $("#skip").on('touchstart', function () {
+                if (!playing) return;
+
+                window.sendScriptMessage('skip', {});
+            });
+        }
+    }
+
+    function startTimer(data) {
+        if (!("time" in data)) return;
+
+        $('.timer-container').css('display', 'flex');
+
+        const ms = data.time * 1000;
+
+        $('.timer_progress').css('transition', `width ${ms}ms linear`);
+    }
+
+    function addDenounce(data) {
+        $('.denounce').remove();
+
+        const controller = data === "true" ? true : false;
+
+        if (controller) return;
+
+        const div = document.createElement('div');
+        div.classList.add('denounce');
+
+        const i = document.createElement('i');
+        i.classList.add('fa-solid', 'fa-flag');
+
+        div.appendChild(i);
+
+        document.querySelector('.canvas-container').appendChild(div);
+
+        $(div).on('click', function () {
+            if (controller) return;
+
+            window.sendScriptMessage('denounce', {});
+        });
+    }
+
+
     function changePermission(disabled) {
         pencilColor.disabled = disabled;
         colorsElement.disabled = disabled;
@@ -640,6 +760,13 @@
         pencil.disabled = disabled;
         eraser.disabled = disabled;
         bucket.disabled = disabled;
+
+        if (disabled) {
+            $(".canvas-container").removeClass('cursor-crosshair');
+        }
+        else {
+            $(".canvas-container").addClass('cursor-crosshair');
+        }
     }
 
     function createCanvasEvents() {
@@ -658,6 +785,12 @@
             shape = 'NORMAL';
         };
 
+        eraser.ontouchstart = function () {
+            setEraser(true);
+
+            shape = 'NORMAL';
+        };
+
         pencilColor.addEventListener('change', function (e) {
             if (!playing) return;
 
@@ -666,24 +799,28 @@
             updateRecentColors(e);
         });
 
-        colorsElement.onclick = function (e) {
+        function colorsElementClick(e) {
             if (!playing) return;
             if (!e.target.hasAttribute('data-color')) return;
 
             changeColor(e.target);
-
             updateRecentColors(e);
-        };
+        }
+
+        colorsElement.onclick = colorsElementClick;
+        colorsElement.ontouchstart = colorsElementClick;
 
         undoElement.onclick = undo;
+        undoElement.ontouchstart = undo;
 
         redoElement.onclick = redo;
+        redoElement.ontouchstart = redo;
 
-        canvasOverlay.onmousedown = function (e) {
+        function canvasOverlayMouseDown(e) {
             if (!playing) return;
 
-            lastX = e.offsetX;
-            lastY = e.offsetY;
+            lastX = e.offsetX || e.touches[0].clientX;
+            lastY = e.offsetY || e.touches[0].clientY;
             startX = lastX;
             startY = lastY;
 
@@ -692,18 +829,31 @@
             updateCursor(cursorElement, e);
         };
 
-        canvasOverlay.onmouseup = stopDrawn;
+        canvasOverlay.onmousedown = canvasOverlayMouseDown;
+        canvasOverlay.ontouchstart = canvasOverlayMouseDown;
 
-        canvasOverlay.onmousemove = function (e) {
+        canvasOverlay.onmouseup = stopDrawn;
+        canvasOverlay.ontouchend = stopDrawn;
+
+        function canvasOverlayMouseMove(e) {
             if (!playing) return;
 
-            const x = e.offsetX;
-            const y = e.offsetY;
+            const x = e.offsetX || e.touches[0].clientX;
+            const y = e.offsetY || e.touches[0].clientY;
             draw(x, y);
             updateCursor(cursorElement, e);
-        };
+        }
+
+        canvasOverlay.onmousemove = canvasOverlayMouseMove;
+        canvasOverlay.ontouchmove = canvasOverlayMouseMove;
 
         canvasOverlay.onmouseover = function (e) {
+            if (!playing) return;
+
+            cursorElement.style.display = 'block';
+        };
+
+        canvasOverlay.ontouchstart = function (e) {
             if (!playing) return;
 
             cursorElement.style.display = 'block';
@@ -714,7 +864,12 @@
             stopDrawn(e);
         };
 
-        canvasOverlay.onclick = function (e) {
+        canvasOverlay.ontouchend = function (e) {
+            cursorElement.style.display = 'none';
+            stopDrawn(e);
+        };
+
+        function canvasOverlayClick(e) {
             if (!playing) return;
 
             if (action === 'BUCKET') {
@@ -723,72 +878,91 @@
                     undo_list.shift();
                 }
 
-                floodFill(e.offsetX, e.offsetY, color_to_rgba(currentColor));
+                const x = e.offsetX || e.touches[0].clientX;
+                const y = e.offsetY || e.touches[0].clientY;
+
+                floodFill(x, y, color_to_rgba(currentColor));
 
                 sendDrawn([{
                     c: currentColor,
                     s: 0,
                     a: 'BUCKET',
-                    data: [{ x: e.offsetX, y: e.offsetY }]
+                    data: [{ x, y }]
                 }]);
             }
-        };
+        }
+
+        canvasOverlay.onclick = canvasOverlayClick;
+        canvasOverlay.ontouchstart = canvasOverlayClick;
 
         changePermission(true);
 
-        $('#bucket').on('click', function () {
+        function bucketClick() {
             if (!playing) return;
-
             action = 'BUCKET';
             shape = 'NORMAL';
-        });
-
-        pencil.onclick = function () {
+        }
+        
+        $('#bucket').on('click', bucketClick);
+        $('#bucket').on('touchstart', bucketClick);
+        
+        function pencilClick() {
             if (!playing) return;
             setEraser(false);
-        };
+        }
 
-        $('#line').on('click', function () {
+        pencil.onclick = pencilClick;
+        pencil.ontouchstart = pencilClick;
+        
+        function lineClick() {
             if (!playing) return;
-
             shape = 'LINE';
             action = 'DRAW';
-        });
+        }
 
-        $('#square-regular').on('click', function () {
+        $('#line').on('click', lineClick);
+        $('#line').on('touchstart', lineClick);
+        
+        function squareRegularClick() {
             if (!playing) return;
-
             shape = 'SQUARE';
             action = 'DRAW';
-        });
-
-        $('#square-solid').on('click', function () {
+        }
+        
+        $('#square-regular').on('click', squareRegularClick);
+        $('#square-regular').on('touchstart', squareRegularClick);
+        
+        function squareSolidClick() {
             if (!playing) return;
-
             shape = 'SQUARE_SOLID';
             action = 'DRAW';
-        });
-
-        $('#circle-regular').on('click', function () {
+        }
+        
+        $('#square-solid').on('click', squareSolidClick);
+        $('#square-solid').on('touchstart', squareSolidClick);
+        
+        function circleRegularClick() {
             if (!playing) return;
-
             shape = 'CIRCLE';
             action = 'DRAW';
-        });
-
-        $('#circle-solid').on('click', function () {
+        }
+        
+        $('#circle-regular').on('click', circleRegularClick);
+        $('#circle-regular').on('touchstart', circleRegularClick);
+        
+        function circleSolidClick() {
             if (!playing) return;
-
             shape = 'CIRCLE_SOLID';
             action = 'DRAW';
-        });
-
-        $('#clear').on('click', function () {
+        }
+        
+        $('#circle-solid').on('click', circleSolidClick);
+        $('#circle-solid').on('touchstart', circleSolidClick);
+        
+        function clearButtonClick() {
             if (!playing) return;
-
             shape = 'NORMAL';
             action = 'DRAW';
-
             clearCanvas();
             sendDrawn([
                 {
@@ -798,16 +972,22 @@
                     data: []
                 }
             ]);
-        });
-
-        $('#recentColors').on('click', function (e) {
+        }
+        
+        $('#clear').on('click', clearButtonClick);
+        $('#clear').on('touchstart', clearButtonClick);
+        
+        function recentColorsClick(e) {
             if (!playing) return;
             if (!e.target.hasAttribute('data-color')) return;
-
             changeColor(e.target);
-        });
+        }
+        
+        $('#recentColors').on('click', recentColorsClick);
+        $('#recentColors').on('touchstart', recentColorsClick);
 
         save.onclick = downloadCanvas;
+        save.ontouchstart = downloadCanvas;
     }
 
     function drawAll(data) {
@@ -829,8 +1009,6 @@
 
     function clearAll() {
         clearCanvas();
-        setWord({ word: '' });
-        setTheme({ theme: '' });
     }
 
     function playerPlaying(data) {
@@ -863,7 +1041,25 @@
         playerCard.classList.add('playing');
     }
 
-    function addPlayer(data) {
+    function playerTurn(data) {
+        if (!("player" in data)) return;
+
+        const player = data.player;
+
+        const playerCard = document.querySelector('.players').querySelector(`[data-player="${player.name}"]`);
+
+        if (!playerCard) return;
+
+        const players = document.querySelector('.players').querySelectorAll('.player-card');
+
+        players.forEach(element => {
+            element.classList.remove('playing');
+        });
+
+        playerCard.classList.add('playing');
+    }
+
+    async function addPlayer(data) {
         if (!("player" in data)) return;
 
         if (document.querySelector('.players').querySelector(`[data-player="${data.player.name}"]`)) {
@@ -894,24 +1090,21 @@
         playerCard.appendChild(img);
         playerCard.appendChild(spans);
 
-        img.onload = function () {
-            document.querySelector('.players').appendChild(playerCard);
-        }
+        await new Promise(resolve => {
+            img.onload = function () {
+                document.querySelector('.players').appendChild(playerCard);
+                resolve();
+            }
+        });
     }
 
-    function addPlayers(data) {
+    async function addPlayers(data) {
         if (!("players" in data)) return;
 
         const players = data.players;
 
-        players.forEach(player => {
-            addPlayer({ player });
-        });
-
-        const player_playing = data.players.find(player => player.isPlaying);
-
-        if (player_playing) {
-            playerPlaying({ playing: true, player: player_playing });
+        for await (const player of players) {
+            await addPlayer({ player });
         }
     }
 
@@ -987,32 +1180,17 @@
         a.click();
     }
 
-    function setTheme(data) {
-        if (!("theme" in data)) return;
-
-        $('#theme').text(data.theme);
-    }
-
-    function setWord(data) {
-        if (!("word" in data)) return;
-
-        $('#word').text(data.word);
-    }
-
     function start(data) {
-        if (!("theme" in data)) return;
         if (!("time" in data)) return;
-        if (!("wordLength" in data)) return;
         if (!("player" in data)) return;
         if (!("isPlaying" in data)) return;
+
+        $('#gartic-words').css('display', 'none');
+        $('#gartic-notification').css('display', 'none');
 
         clearAll();
 
         $('#time').text(data.time);
-
-        const word = Array(data.wordLength).fill('_').join(' ');
-        setWord({ word });
-        setTheme({ theme: data.theme });
 
         ready = true;
 
@@ -1023,12 +1201,150 @@
         });
     }
 
-    function loadHistory(data) {
+    function loadChat(data) {
+        if (!("messages" in data)) return;
+
+        const messages = data.messages;
+
+        for (const message of messages) {
+            receiveMessage({ message });
+        }
+    }
+
+    async function loadHistory(data) {
         if (!("history" in data)) return;
 
-        drawAll(data.history);
-        setTheme({ theme: data.theme });
-        setWord({ word: data.word });
+        const historyData = data.history;
+
+        if (historyData.data.length)
+            drawAll({ history: historyData.data });
+
+        await addPlayers({ players: historyData.players });
+
+        const player = historyData.players.find(player => player.isPlaying);
+
+        if (player)
+            playerPlaying({ playing: historyData.isPlaying, player });
+
+        loadChat({ messages: historyData.chat });
+    }
+
+    async function loadRoom(data) {
+        if (!("room" in data)) return;
+
+        const room = data.room;
+
+        const roomElement = document.createElement('div');
+        roomElement.classList.add('room');
+
+        const theme = document.createElement('div');
+        theme.classList.add('room-theme');
+
+        const name = document.createElement('div');
+        name.classList.add('room-name');
+
+        const infosRoom = document.createElement('div');
+        infosRoom.classList.add('infosRoom');
+
+        theme.textContent = 'Tema';
+        name.textContent = room.theme;
+
+        infosRoom.innerHTML = `<div class="users-quantity"><i class="fa-regular fa-user"></i><span class="room-players">${room.totalPlayers}/${room.maxPlayers}</span></div>`;
+        infosRoom.innerHTML += `<div class=""><i class="fa-solid fa-trophy"></i><span class="points">${room.points}/${room.maxPoints}</span></div>`;
+
+        roomElement.appendChild(theme);
+        roomElement.appendChild(name);
+        roomElement.appendChild(infosRoom);
+
+        function joinRoom() {
+            window.sendScriptMessage('join', { room: room.id });
+
+            $(".gartic-menu").addClass('hidden');
+            $("#rooms").addClass('hidden');
+            $('.container-canvas').css('display', 'flex');
+        }
+
+        function updateRoom(newData) {
+            if (!("room" in newData)) return;
+
+            const newRoom = newData.room;
+
+            infosRoom.innerHTML = `<div class="users-quantity"><i class="fa-regular fa-user"></i><span class="room-players">${newRoom.totalPlayers}/${newRoom.maxPlayers}</span></div>`;
+            infosRoom.innerHTML += `<div class=""><i class="fa-solid fa-trophy"></i><span class="points">${newRoom.points}/${newRoom.maxPoints}</span></div>`;
+
+            roomElement.removeEventListener('click', joinRoom);
+
+            if (newRoom.totalPlayers === newRoom.maxPlayers) {
+                roomElement.classList.add('full');
+                return;
+            }
+
+            roomElement.classList.remove('full');
+            roomElement.addEventListener('click', joinRoom);
+        }
+
+        roomElement.addEventListener('click', joinRoom);
+
+        paintHandler.on(`disposeRoom-${room.id}`, function () {
+            roomElement.remove();
+
+            paintHandler.off(`updateRoom-${room.id}`);
+            paintHandler.off(`disposeRoom-${room.id}`);
+        });
+
+        paintHandler.on(`updateRoom-${room.id}`, updateRoom);
+
+        $('#rooms').append(roomElement);
+    }
+
+    async function loadRooms(data) {
+        if (!("rooms" in data)) return;
+
+        if (data.rooms.length)
+            $('#rooms').empty();
+
+        $(".gartic-menu").removeClass('hidden');
+
+        const rooms = data.rooms;
+
+        for (const room of rooms) {
+            loadRoom({ room });
+        }
+
+        $("#rooms").removeClass('hidden');
+    }
+
+    function receiveMessage(data) {
+        if (!("message" in data)) return;
+
+        const chat = document.querySelector('.chat-messages');
+
+        const message = document.createElement('div');
+        message.classList.add('chat-message');
+
+        const text = document.createElement('div');
+        text.classList.add('chat-message__text');
+
+        text.innerHTML = data.message;
+
+        message.appendChild(text);
+
+        chat.insertBefore(message, chat.firstChild);
+
+        if (chat.children.length > 50) {
+            chat.removeChild(chat.lastChild);
+        }
+    }
+
+    function chooseWords(data) {
+        if (!("words" in data)) return;
+
+        const words = data.words;
+
+        $('span[data-word="1"]').text(words[0]);
+        $('span[data-word="2"]').text(words[1]);
+
+        $('#gartic-words').css('display', 'flex');
     }
 
     function Paint(scriptName) {
@@ -1037,6 +1353,10 @@
 
         this.on = (eventName, callback) => {
             this.events.set(eventName, callback);
+        };
+
+        this.off = (eventName) => {
+            this.events.delete(eventName);
         };
 
         this.emit = event => {
@@ -1081,31 +1401,36 @@
         };
     }
 
+    const paintHandler = new Paint('paint');
+
     (() => {
         loadTools();
         loadColors();
         createCanvasEvents();
 
-        const handler = new Paint('paint');
+        paintHandler.on('draw', receiveDrawn);
+        paintHandler.on('drawAll', drawAll);
+        paintHandler.on('clear', clearAll);
+        paintHandler.on('playing', playerPlaying);
+        paintHandler.on('addPlayer', addPlayer);
+        paintHandler.on('addPlayers', addPlayers);
+        paintHandler.on('playerTurn', playerTurn);
+        paintHandler.on('updatePlayer', updatePlayer);
+        paintHandler.on('removePlayer', removePlayer);
+        paintHandler.on('playerScore', playerScored);
+        paintHandler.on('undo', undoCanvas);
+        paintHandler.on('redo', redoCanvas);
+        paintHandler.on('start', start);
+        paintHandler.on('loadHistory', loadHistory);
+        paintHandler.on('loadRooms', loadRooms);
+        paintHandler.on('message', receiveMessage);
+        paintHandler.on('chooseWord', chooseWords);
+        paintHandler.on('addDenounce', addDenounce);
+        paintHandler.on('showHint', showHint);
+        paintHandler.on('startTimer', startTimer);
 
-        handler.on('draw', receiveDrawn);
-        handler.on('drawAll', drawAll);
-        handler.on('clear', clearAll);
-        handler.on('playing', playerPlaying);
-        handler.on('addPlayer', addPlayer);
-        handler.on('addPlayers', addPlayers);
-        handler.on('updatePlayer', updatePlayer);
-        handler.on('removePlayer', removePlayer);
-        handler.on('playerScore', playerScored);
-        handler.on('undo', undoCanvas);
-        handler.on('redo', redoCanvas);
-        handler.on('setTheme', setTheme);
-        handler.on('setWord', setWord);
-        handler.on('start', start);
-        handler.on('loadHistory', loadHistory);
-
-        $('#script-events').on('uiMessage', handler.emit);
-        $('#script-events').on('dispose', handler.dispose);
+        $('#script-events').on('uiMessage', paintHandler.emit);
+        $('#script-events').on('dispose', paintHandler.dispose);
 
         const canvasGame = document.querySelector(".canvas-game").style.height;
         const scoreboard = document.querySelector(".scoreboard");
@@ -1130,21 +1455,39 @@
             $('#guess-text').val('');
         });
 
-        $("#leave").on('click', function () {
-            if (this.value === 'Abandonar Partida') {
-                this.value = 'Confirmar';
-                this.classList.add('confirm');
+        document.querySelector("#leave").addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const target = e.target;
+
+            const text = target.innerText;
+
+            if (text === 'Abandonar Partida') {
+                $("#leave").html('Confirmar <i class="fa-solid fa-arrow-right-from-bracket"></i>');
+                $("#leave").addClass('confirm');
                 return;
             }
 
             window.sendScriptMessage('leave', {});
-            this.value = 'Abandonar Partida';
-            this.classList.remove('confirm');
+            $("#leave").html('Abandonar Partida <i class="fa-solid fa-arrow-right-from-bracket"></i>');
+            $("#leave").removeClass('confirm');
             clearAll();
             $('#guess-text').val('');
             $("#players").empty();
             changePermission(true);
             $(".container-canvas").hide();
+
+            loadRooms({ rooms: [] });
+        });
+
+        $("button").on('click', function () {
+            const data = $(this).data('word');
+
+            if (!data) return;
+
+            window.sendScriptMessage('choose-word', { index: data });
+
+            $('#gartic-words').hide();
         });
 
         window.sendScriptMessage('paint-ready', {});

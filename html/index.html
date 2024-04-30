@@ -6,13 +6,18 @@
     <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/style.css?v=%dataScript%">
     <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/gartic-room.css?v=%dataScript%">
     <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/root.css?v=%dataScript%">
+    <link rel="stylesheet" href="https://cdn.hubbe.biz/scripts/paint/media.css?v=%dataScript%">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap"
+        rel="stylesheet">
     <!-- <link rel="stylesheet" href="gartic-room.css"> -->
     <!-- <script src="https://kit.fontawesome.com/0556de7ff8.js" crossorigin="anonymous"></script> -->
 </head>
 
 <body>
-    <div class="gartic-menu hidden" style="position: absolute; display: none;">
+    <div class="gartic-menu hidden" style="position: absolute;">
         <div class="menu-icons">
             <div class="menu-icon" id="open-rooms">
                 <i class="fa-solid fa-bars"></i>
@@ -36,22 +41,6 @@
                     </div>
                 </div>
                 <div class="rooms-list">
-                    <div class="room">
-                        <div class="room-name">Sala 1</div>
-                        <div class="room-players">2/8</div>
-                    </div>
-                    <div class="room">
-                        <div class="room-name">Sala 2</div>
-                        <div class="room-players">4/8</div>
-                    </div>
-                    <div class="room">
-                        <div class="room-name">Sala 3</div>
-                        <div class="room-players">6/8</div>
-                    </div>
-                    <div class="room">
-                        <div class="room-name">Sala 4</div>
-                        <div class="room-players">8/8</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -104,7 +93,7 @@
         </div>
     </div>
 
-    <div class="container-canvas opacity-hidden" style="position: absolute; top: 20vh; display: flex;">
+    <div class="container-canvas opacity-hidden" style="position: absolute; top: 20vh; display: none;">
         <div class="canvas-header">
             <div class="cursor-move">
                 <p>Pressione para arrastar</p>
@@ -119,12 +108,14 @@
 
                     <div class="toolbar__item" id="colors">
                     </div>
+
                     <div class="toolbar__item">
                         <div class="color-div">
                             <input type="color" value="#000000" class="color-input" id="colorpicker">
                             <i class="fa-solid fa-eye-dropper eyedropper"></i>
                         </div>
                     </div>
+
                     <div class="toolbar__item">
                         <div class="recentColors-title">Ultimas cores</div>
                         <div id="recentColors">
@@ -138,29 +129,112 @@
             </div>
 
             <div class="canvas-game" style="height: 600px">
-                <div class="timer-container hidden">
-                    <!-- progress line bar -->
-                    <div class="timer">
-                        <span class="timer_progress">
-                        </span>
+                <div class="canvas-container" style="position: relative; width:800px; height:550px;border-radius: 5px">
+                    <div class="timer-container" style="display: none;">
+                        <div class="timer">
+                            <span class="timer_progress" style="width: 0%;">
+                            </span>
+                        </div>
                     </div>
-                </div>
-                <div class="canvas-container cursor-crosshair"
-                    style="position: relative; width:800px; height:550px;border-radius: 5px">
-                    <canvas class="canvas-container" width="800" height="550" id="canvas"
-                        style="position: absolute;"></canvas>
-                    <canvas class="canvas-container" width="800" height="550" id="canvas-overlay"
+                    </style>
+                    <div class="speech-bubble" style="display: none;" id="gartic-words">
+                        <div class="title font-nunito-black">É A SUA VEZ!</div>
+                        <div class="subtitle">Escolha uma palavra para desenhar</div>
+                        <div class="illustration">
+                            <div class="cttCenter">
+                                <div class="lottie"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 145 145"
+                                        width="145" height="145" preserveAspectRatio="xMidYMid meet"
+                                        style="width: 100%; height: 100%; transform: translate3d(0px, 0px, 0px);">
+                                        <defs>
+                                            <clipPath id="__lottie_element_82">
+                                                <rect width="145" height="145" x="0" y="0"></rect>
+                                            </clipPath>
+                                        </defs>
+                                        <g clip-path="url(#__lottie_element_82)">
+                                            <g transform="matrix(1,0,0,1,29.262996673583984,24.03600311279297)"
+                                                opacity="1" style="display: block;">
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,49.63999938964844,49.316001892089844)">
+                                                    <path fill="rgb(255,255,255)" fill-opacity="1"
+                                                        d=" M-45.44900131225586,46.380001068115234 C-45.44900131225586,46.380001068115234 -41.08100128173828,25.174999237060547 -41.08100128173828,25.174999237060547 C-41.08100128173828,25.174999237060547 28.584999084472656,-46.9900016784668 28.584999084472656,-46.9900016784668 C28.584999084472656,-46.9900016784668 41.14400100708008,-49.06700134277344 45.856998443603516,-31.003000259399414 C45.856998443603516,-31.003000259399414 -22.908000946044922,41.624000549316406 -22.908000946044922,41.624000549316406 C-22.908000946044922,41.624000549316406 -45.856998443603516,49.066001892089844 -45.856998443603516,49.066001892089844 C-45.856998443603516,49.066001892089844 -45.44900131225586,46.380001068115234 -45.44900131225586,46.380001068115234z">
+                                                    </path>
+                                                </g>
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,48.75600051879883,51.542999267578125)">
+                                                    <path fill="rgb(0,31,67)" fill-opacity="1"
+                                                        d=" M48.35200119018555,-32.987998962402344 C48.32600021362305,-33.15599822998047 45.43899917602539,-49.81399917602539 29.65399932861328,-51.10900115966797 C29.65399932861328,-51.10900115966797 28.80299949645996,-51.178001403808594 28.80299949645996,-51.178001403808594 C28.80299949645996,-51.178001403808594 -42.236000061035156,22.16699981689453 -42.236000061035156,22.16699981689453 C-42.236000061035156,22.16699981689453 -48.50699996948242,51.178001403808594 -48.50699996948242,51.178001403808594 C-48.50699996948242,51.178001403808594 -21.812999725341797,41.96200180053711 -21.812999725341797,41.96200180053711 C-21.812999725341797,41.96200180053711 48.50699996948242,-32.040000915527344 48.50699996948242,-32.040000915527344 C48.50699996948242,-32.040000915527344 48.35200119018555,-32.987998962402344 48.35200119018555,-32.987998962402344z M30.176000595092773,-47.22700119018555 C33.52000045776367,-46.80099868774414 36.1150016784668,-45.5260009765625 38.12699890136719,-43.89099884033203 C38.12699890136719,-43.89099884033203 -29.601999282836914,26.95800018310547 -29.601999282836914,26.95800018310547 C-32.37799835205078,24.52899932861328 -35.12799835205078,23.082000732421875 -37.13199996948242,22.253000259399414 C-37.13199996948242,22.253000259399414 30.176000595092773,-47.22700119018555 30.176000595092773,-47.22700119018555z M-41.92300033569336,38.152000427246094 C-41.92300033569336,38.152000427246094 -39.19300079345703,25.516000747680664 -39.19300079345703,25.516000747680664 C-36.01100158691406,26.69300079345703 -29.257999420166016,30.1560001373291 -25.288000106811523,39.15399932861328 C-25.288000106811523,39.15399932861328 -36.76599884033203,43.117000579833984 -36.76599884033203,43.117000579833984 C-38.409000396728516,39.89099884033203 -40.654998779296875,38.624000549316406 -41.92300033569336,38.152000427246094z M-22.216999053955078,36.92499923706055 C-23.590999603271484,33.972999572753906 -25.235000610351562,31.56599998474121 -26.964000701904297,29.597999572753906 C-26.964000701904297,29.597999572753906 40.731998443603516,-41.21699905395508 40.731998443603516,-41.21699905395508 C43.10300064086914,-38.17499923706055 44.143001556396484,-34.82500076293945 44.529998779296875,-33.24300003051758 C44.529998779296875,-33.24300003051758 -22.216999053955078,36.92499923706055 -22.216999053955078,36.92499923706055z">
+                                                    </path>
+                                                </g>
+                                            </g>
+                                            <g transform="matrix(1,0,0,1,33.72999572753906,106.76000213623047)"
+                                                opacity="1" style="display: block;">
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,21.583999633789062,15.642999649047852)">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        fill-opacity="0" stroke="rgb(0,31,67)" stroke-opacity="1"
+                                                        stroke-width="4" d="M0 0"></path>
+                                                </g>
+                                            </g>
+                                            <g transform="matrix(1,0,0,1,18.222999572753906,13.702995300292969)"
+                                                opacity="1" style="display: block;">
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,71.38800048828125,76.44599914550781)">
+                                                    <path fill="rgb(0,150,255)" fill-opacity="1"
+                                                        d=" M-26.746000289916992,-14.270000457763672 C-26.746000289916992,-14.270000457763672 -14.746000289916992,-15.083999633789062 -11.085000038146973,-29.729000091552734 C-11.085000038146973,-29.729000091552734 20.440000534057617,3.424999952316284 26.746000289916992,27.628000259399414 C26.746000289916992,27.628000259399414 25.68199920654297,29.729000091552734 25.68199920654297,29.729000091552734 C25.68199920654297,29.729000091552734 -6.611000061035156,11.154000282287598 -26.746000289916992,-14.270000457763672z">
+                                                    </path>
+                                                </g>
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,42.340999603271484,44.94200134277344)">
+                                                    <path fill="rgb(255,255,255)" fill-opacity="1"
+                                                        d=" M9.593000411987305,15.33899974822998 C13.868000030517578,12.33899974822998 16.45400047302246,7.369999885559082 18.072999954223633,2.5309998989105225 C18.09600067138672,2.4590001106262207 18.117000579833984,2.382999897003174 18.141000747680664,2.311000108718872 C10.652999877929688,-4.763000011444092 1.7170000076293945,-11.664999961853027 -8.930000305175781,-17.858999252319336 C-8.930000305175781,-17.858999252319336 -18.141000747680664,-15.824000358581543 -18.141000747680664,-15.824000358581543 C-18.141000747680664,-15.824000358581543 -10.494000434875488,0.10999999940395355 2.86899995803833,17.858999252319336 C5.283999919891357,17.593000411987305 7.579999923706055,16.750999450683594 9.593000411987305,15.33899974822998z">
+                                                    </path>
+                                                </g>
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,62.9119987487793,67.24700164794922)">
+                                                    <path fill="rgb(0,31,67)" fill-opacity="1"
+                                                        d=" M-26.72599983215332,-42.45500183105469 C-26.72599983215332,-42.45500183105469 -22.739999771118164,-66.21299743652344 -62.6619987487793,-66.99700164794922 C-62.6619987487793,-66.99700164794922 -53.12200164794922,-62.590999603271484 -52.9640007019043,-53.3129997253418 C-52.856998443603516,-46.98899841308594 -54.821998596191406,-36.604000091552734 -45.19900131225586,-31.635000228881836 C-37.05699920654297,-27.42799949645996 -27.191999435424805,-31.216999053955078 -26.72599983215332,-42.45500183105469z M37.12099838256836,35.994998931884766 C33.507999420166016,23.14699935913086 2.260999917984009,-30.298999786376953 -29.160999298095703,-41.277000427246094 C-29.160999298095703,-41.277000427246094 -30.316999435424805,-37.763999938964844 -30.316999435424805,-37.763999938964844 C-24.256999969482422,-35.64699935913086 -15.647000312805176,-30.89299964904785 -5.035999774932861,-20.461000442504883 C-8.350000381469727,-9.984999656677246 -14.819999694824219,-7.709000110626221 -17.860000610351562,-7.229000091552734 C-30.351999282836914,-22.929000854492188 -33.834999084472656,-33.902000427246094 -33.89400100708008,-34.0989990234375 C-33.89400100708008,-34.0989990234375 -35.584999084472656,-33.54199981689453 -35.584999084472656,-33.54199981689453 C-35.584999084472656,-33.54199981689453 -37.303001403808594,-32.979000091552734 -37.303001403808594,-32.979000091552734 C-37.04600143432617,-32.12200164794922 -33.3120002746582,-20.226999282836914 -19.709999084472656,-3.5329999923706055 C-19.709999084472656,-3.5329999923706055 -19.718000411987305,-3.4059998989105225 -19.718000411987305,-3.4059998989105225 C-19.70599937438965,-3.4049999713897705 -19.660999298095703,-3.4030001163482666 -19.60300064086914,-3.4010000228881836 C-9.170999526977539,9.371000289916992 7.026000022888184,24.934999465942383 31.85300064086914,40.51100158691406 C33.07500076293945,41.277000427246094 34.564998626708984,41.167999267578125 35.742000579833984,40.22600173950195 C36.53300094604492,39.59199905395508 37.04499816894531,38.680999755859375 37.20800018310547,37.71200180053711 C37.303001403808594,37.14500045776367 37.27899932861328,36.55799865722656 37.12099838256836,35.994998931884766z M33.60300064086914,37.266998291015625 C10.493000030517578,22.75200080871582 -5.01200008392334,8.133000373840332 -15.269000053405762,-4.063000202178955 C-14.291000366210938,-4.35699987411499 -13.211999893188477,-4.775000095367432 -12.085000038146973,-5.38100004196167 C-8.940999984741211,-7.074999809265137 -4.886000156402588,-10.553000450134277 -2.2339999675750732,-17.6200008392334 C2.059000015258789,-13.13599967956543 6.64900016784668,-7.749000072479248 11.510000228881836,-1.253999948501587 C22.802000045776367,13.835000038146973 31.81800079345703,30.378000259399414 33.694000244140625,37.051998138427734 C33.71200180053711,37.1150016784668 33.65800094604492,37.20800018310547 33.60300064086914,37.266998291015625z">
+                                                    </path>
+                                                </g>
+                                            </g>
+                                            <g transform="matrix(1,0,0,1,35.763999938964844,4.267995834350586)"
+                                                opacity="1" style="display: block;">
+                                                <g opacity="1"
+                                                    transform="matrix(1,0,0,1,20.982999801635742,22.990999221801758)">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        fill-opacity="0" stroke="rgb(0,31,67)" stroke-opacity="1"
+                                                        stroke-width="4" d="M0 0"></path>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </svg></div>
+                            </div>
+                        </div>
+                        <div class="containerWords">
+                            <div class="word"><span data-word="1"></span><button
+                                    data-word="1"><strong>Desenhar</strong></button>
+                            </div>
+                            <div class="or">ou</div>
+                            <div class="word"><span data-word="2"></span><button
+                                    data-word="2"><strong>Desenhar</strong></button>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas width="800" height="550" id="canvas"
+                        style="position: absolute; background-color: #fff;"></canvas>
+                    <canvas width="800" height="550" id="canvas-overlay"
                         style="position: absolute; background-color: transparent;"></canvas>
                 </div>
                 <div class="mouse-follow" id="cursor"></div>
                 <div class="game-actions">
-                    <div class="hint-container">
-                        <div class="hint-title">Tema: <span id="theme"></span></div>
-                        <div class="hint-text" id="word"></div>
+                    <div class="gartic-chat">
+                        <div class="chat">
+                            <div class="chat-messages">
+                            </div>
+                        </div>
                     </div>
                     <div class="guess-container">
                         <input id="guess-text" class="guess-text" type="text" placeholder="Insira seu palpite..." />
-                        <div id="send-guess" class="btn btn-success">Enviar</button>
+                        <div id="send-guess" class="btn btn-success"><span>Enviar</span></button>
                         </div>
                     </div>
                 </div>
@@ -170,11 +244,11 @@
                 <div class="players-container">
                     <div class="players">
                     </div>
-                    <div class="buttons-interactions">
-                        <div class="btn btn-danger" id="leave">
-                            Abandonar Partida
-                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        </div>
+                </div>
+                <div class="buttons-interactions">
+                    <div class="btn btn-danger" id="leave">
+                        Abandonar Partida
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                     </div>
                 </div>
             </div>

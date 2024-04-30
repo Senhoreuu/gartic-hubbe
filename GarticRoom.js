@@ -4,12 +4,15 @@ import Player from "./Player.js";
 
 export default class GarticRoom extends Gartic {
     #id = 0;
-    #players = new Map();
+    #players = new Map(); // { key: number, value: Player }[]
     #round = 0;
     #ownerId = 0;
     #time = 0;
-    #currentPlayer;
-    #delays = new Map();
+    #currentPlayer; // Player
+    #lastPlayer; // Player
+    #delays = new Map(); // { key: string, value: Delay }[]
+    #chat = []; // { name: string, message: string }[]
+    #words = []; // string[]
 
     constructor(ownerId) {
         super();
@@ -23,16 +26,42 @@ export default class GarticRoom extends Gartic {
         return this.#id;
     }
 
+    /**
+     * @returns {Player | null}
+     */
     getCurrentPlayer() {
         if (!this.#currentPlayer) return null;
 
         return this.#currentPlayer;
     }
 
+    /**
+     * @returns {Player | null}
+     */
+    getLastPlayer() {
+        if (!this.#lastPlayer) return null;
+
+        return this.#lastPlayer;
+    }
+
+    /**
+     * @param {Player} player
+     */
     setCurrentPlayer(player) {
+        if (!player) return;
+
+        this.#lastPlayer = this.#currentPlayer;
         this.#currentPlayer = player;
     }
 
+    getRandomPlayer() {
+        const players = this.getPlayers().filter(player => player.getId() !== this.#lastPlayer?.getId());
+        return players[Math.floor(Math.random() * players.length)];
+    }
+
+    /**
+     * @returns {Player[]}
+     */
     getPlayers() {
         return [...this.#players.values()];
     }
@@ -41,6 +70,10 @@ export default class GarticRoom extends Gartic {
         return this.#players.size;
     }
 
+    /**
+     * @param {ScriptEntity | number | Player} search 
+     * @returns {Player | null}
+     */
     getPlayer(search) {
         if (search instanceof Player) return search;
 
@@ -57,22 +90,69 @@ export default class GarticRoom extends Gartic {
         return this.#ownerId;
     }
 
+    updateRoomUI() {
+        Room.getAllPlayers().forEach(p => {
+            p.sendUIMessage(`updateRoom-${this.getId()}`, JSON.stringify({
+                room: {
+                    maxPlayers: game.maxPlayers,
+                    totalPlayers: this.getTotalPlayers(),
+                    points: this.getHighestScore(),
+                    maxPoints: 120
+                }
+            }));
+        });
+    }
+
     setRound(round) {
         if (!round || round < 0) return;
 
         this.#round = round;
     }
 
+    getHighestScore() {
+        let highestScore = 0;
+
+        this.#players.forEach(player => {
+            if (player.getPoints() > highestScore) {
+                highestScore = player.getPoints();
+            }
+        });
+
+        return highestScore;
+    }
+
+    /**
+     * @param {Player} player
+     */
     addPlayer(player) {
         if (this.#players.size >= 10 || !player) return;
 
         this.#players.set(player.getId(), player);
+
+        this.sendUIMessage('addPlayer', { player: { name: player.getName(), points: player.getPoints(), isPlaying: false } });
     }
 
+    /**
+     * @param {ScriptEntity | number | Player} player 
+    */
     removePlayer(player) {
         if (!player) return;
 
-        this.#players.delete(player.getId());
+        if (player instanceof Player) {
+            this.#players.delete(player.getId());
+        }
+        else if (typeof player === 'number') {
+            this.#players.delete(player);
+        }
+        else {
+            this.#players.delete(player.getPlayerId());
+        }
+
+        if (this.#players.size === 0) {
+            game.rooms.delete(this.#id);
+        }
+
+        this.updateRoomUI();
     }
 
     equals(room) {
@@ -81,9 +161,7 @@ export default class GarticRoom extends Gartic {
         return this.#id === room.getId();
     }
 
-    sendUIMessage(event, value) {
-        value = value || {};
-
+    sendUIMessage(event, value = {}) {
         this.#players.forEach(player => {
             try {
                 player.sendUIMessage(event, value);
@@ -103,12 +181,23 @@ export default class GarticRoom extends Gartic {
 
     startTime() {
         if (this.#delays.has('time')) return;
+
+        this.resetTime();
+
         const delay =
-            Delay.wait(() => {
+            Delay.interval(() => {
                 this.#time--;
+
+                if (this.#time <= 0) {
+                    this.stopTime();
+                }
             }, 2);
 
         this.#delays.set('time', delay);
+
+        if (this.#currentPlayer) {
+            this.#currentPlayer.sendUIMessage('startTimer', { time: this.#time });
+        }
     }
 
     stopTime() {
@@ -124,5 +213,35 @@ export default class GarticRoom extends Gartic {
 
     getTime() {
         return this.#time;
+    }
+
+    getChat() {
+        return this.#chat;
+    }
+
+    /**
+     * @param {Player} player 
+     * @param {string} message 
+     */
+    addChatMessage(player, message) {
+        this.#chat.push(`<b>${player.getName()}:</b> ${message}`);
+    }
+
+    addCustomMessage(message) {
+        this.#chat.push(message);
+    }
+
+    clearChat() {
+        this.#chat = [];
+
+        this.sendUIMessage('clearChat');
+    }
+
+    setWords(words) {
+        this.#words = words;
+    }
+
+    getWords() {
+        return this.#words;
     }
 }

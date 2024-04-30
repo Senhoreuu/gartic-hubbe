@@ -1,12 +1,430 @@
 import GarticRoom from "./GarticRoom.js";
 import Player from "./Player.js";
+import EventMap from "./EventMap.js";
 import themes from "./themes.js";
 import words from "./words.js";
+import game from "./game.js";
 
-const events = new Map();
+const events = new EventMap();
 
 const garticRoom = new GarticRoom(2019);
+garticRoom.setTheme("Animais");
+game.rooms.set(garticRoom.getId(), garticRoom);
 
+/**
+ * @param {ScriptEntity} entity
+ * @param {GarticRoom} room
+ */
+const start = (room) => {
+    const totalPlayers = room.getTotalPlayers();
+    if (totalPlayers < 2) {
+        room.notification('generic', 'Não há jogadores suficientes para iniciar o jogo.');
+        return;
+    }
+
+    const player = room.getRandomPlayer();
+
+    room.setCurrentPlayer(player);
+
+    player.notification('generic', `É a sua vez, ${player.getName()}!`);
+
+    player.sendUIMessage('chooseWord', { words: randomWords(garticRoom) });
+    room.sendUIMessage('playerTurn', { player: { name: player.getName() } });
+
+    room.startTime();
+};
+
+/**
+ * @param {GarticRoom} room 
+ */
+const startRound = (room) => {
+    room.setRound(room.getRound() + 1);
+    start(room);
+};
+
+/**
+ * @param {GarticRoom} room 
+ */
+const endRound = (room) => {
+    room.getPlayers().forEach(player => {
+        player.setScored(false);
+    });
+
+    startRound(room);
+};
+
+/**
+ * @param {ScriptEntity} entity
+ * @param {GarticRoom} room 
+ */
+const hint = (entity, room) => {
+    if (!entity || !room || !room.getCurrentPlayer()) return;
+
+    const player = room.getPlayer(entity);
+
+    if (!player || room.getCurrentPlayer().getId() !== player.getId()) return;
+
+    if (room.getHints() >= room.getMaxHints()) return;
+
+    room.addRandomHint();
+};
+
+/**
+ * @param {ScriptEntity} entity
+ * @param {GarticRoom} room 
+ */
+const skip = (entity, room) => {
+    if (!entity || !room || !room.getCurrentPlayer()) return;
+
+    const player = room.getPlayer(entity);
+
+    if (!player || room.getCurrentPlayer().getId() !== player.getId()) return;
+
+    if (room.getTotalPlayers() === 1) {
+        entity.notification('generic', 'Não há jogadores suficientes para pular a vez.');
+        return;
+    }
+
+    const message = `<font color="#0000ff"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> pulou a vez</font>`;
+
+    room.sendUIMessage('message', { message });
+
+    room.addCustomMessage(message);
+
+    endRound(room);
+};
+
+/**
+ * @param {ScriptEntity} entity
+ * @param {GarticRoom} room 
+ */
+const denounce = (entity, room) => {
+    if (!entity || !room || !room.getCurrentPlayer()) return;
+
+    const player = room.getPlayer(entity);
+
+    if (!player || room.getCurrentPlayer().getId() === player.getId()) return;
+
+    const message = `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> denunciou o desenho</font>`;
+
+    room.sendUIMessage('message', { message });
+
+    room.addCustomMessage(message);
+};
+
+/**
+ * @param {ScriptEntity} entity
+ * @param {GarticRoom} room 
+ */
+const guess = (entity, room, data) => {
+    if (!entity || !room || !room.getCurrentPlayer()) return;
+
+    if (!("word" in data)) return;
+
+    const player = room.getPlayer(entity);
+
+    if (!player || room.getCurrentPlayer().getId() === player.getId()) return;
+
+    const word = data.word;
+
+    if (!word) return;
+
+    room.addChatMessage(player, word);
+
+    const correct = room.isCorrectWord(word);
+
+    if (!correct) {
+        sendToChat(room, `<b>${player.getName()}</b>: ${word}`);
+        return;
+    }
+
+    if (player.scored()) return;
+
+    player.setScored(true);
+
+    room.getCurrentPlayer().updatePoints(1);
+    player.updatePoints(1);
+    player.notification('generic', `Parabéns! Você acertou a palavra!`);
+
+    room.sendUIMessage('playerScore', { player: { name: player.getName(), points: player.getPoints() } });
+    room.sendUIMessage('updatePlayer', { player: { name: room.getCurrentPlayer().getName(), points: room.getCurrentPlayer().getPoints() } });
+
+};
+
+/**
+ * @param {GarticRoom} room 
+ */
+const undo = (room) => {
+    if (!room || !room.getCurrentPlayer()) return;
+
+    if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
+
+    if (!room.getLastData().length) return;
+
+    room.pushRedoData(room.popLastData());
+
+    room.getPlayers().forEach(player => {
+        if (player.equals(entity)) return;
+
+        player.sendUIMessage('clear', "");
+        player.sendUIMessage('drawAll', { history: room.getLastData() });
+    });
+};
+
+/**
+ * @param {GarticRoom} room 
+ */
+const redo = (room) => {
+    if (!room || !room.getCurrentPlayer()) return;
+
+    if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
+
+    if (!room.getRedoData().length) return;
+
+    room.getLastData().push(room.popRedoData());
+
+    room.getPlayers().forEach(player => {
+        if (player.equals(entity)) return;
+
+        player.sendUIMessage('clear', "");
+        player.sendUIMessage('drawAll', { history: room.getLastData() });
+    });
+};
+
+/**
+ * @param {ScriptEntity} player
+ * @param {GarticRoom} room 
+ */
+const chooseWord = (entity, room, data) => {
+    if (!entity || !room || !room.getCurrentPlayer()) return;
+
+    const player = room.getPlayer(entity);
+
+    if (!player || room.getCurrentPlayer().getId() !== player.getId()) return;
+
+    const index = data.index;
+
+    if (index < 0 || index > 1) return;
+
+    const word = room.getWords()[index];
+
+    if (!word) return;
+
+    room.setWord(word);
+
+    room.getPlayers().forEach(p => {
+        const isPlaying = p.getId() === player.getId();
+        p.sendUIMessage('start', { time: 0, player: { name: player.getName() }, isPlaying });
+        p.sendUIMessage('addDenounce', isPlaying);
+        p.sendUIMessage('showHint', { isPlaying, wordLength: isPlaying ? word.length : 0 });
+    });
+};
+
+/**
+ * @param {ScriptEntity} entity 
+ * @param {GarticRoom} room
+ */
+const add = (entity, room) => {
+    room.addPlayer(new Player(entity));
+};
+
+const notification = (entity, data) => {
+    if (!("message" in data)) return;
+
+    data.message = data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    entity.notification('generic', data.message || "");
+};
+
+/**
+ * @param {GarticRoom} room
+ * @param {string} message
+ */
+const sendToChat = (room, message) => {
+    room.getPlayers().forEach(p => {
+        p.sendUIMessage('message', { message });
+    });
+};
+
+/**
+ * @param {Player} player 
+ * @param {GarticRoom} room
+ */
+const leave = (player, room) => {
+    room.removePlayer(player);
+
+    room.sendUIMessage('removePlayer', { player: { name: player.getName() } });
+
+    const message = `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> abandonou a partida</font>`;
+
+    room.sendUIMessage('message', { message: `<font color="#FF0000"><i class="fa-solid fa-circle-exclamation"></i> <b>${player.getName()}</b> abandonou a partida</font>` });
+
+    room.addCustomMessage(message);
+
+    if (!room.getCurrentPlayer()) return;
+
+    if (room.getCurrentPlayer().getId() !== player.getId()) return;
+
+    room.setCurrentPlayer(null);
+};
+
+/**
+ * @param {GarticRoom} room 
+ */
+const dispose = (room) => {
+    const id = room.getId();
+
+    game.rooms.delete(id);
+
+    room.getPlayers().forEach(player => {
+        try {
+            player.sendUIMessage(`disposeRoom-${id}}`, "");
+        }
+        catch (e) { }
+    });
+};
+
+/**
+ * @param {GarticRoom} room 
+ * @returns {string}
+ */
+function randomWords(room) {
+    if (!room.getTheme()) return "";
+
+    const wordsList = words[room.getTheme()];
+
+    if (!wordsList) return "";
+
+    wordsList.sort(() => Math.random() - 0.5);
+
+    room.setWords(wordsList);
+
+    return [wordsList[0], wordsList[1]];
+}
+
+/**
+ * @param {ScriptEntity} entity
+ * @returns {GarticRoom}
+ */
+function getRoom(entity) {
+    // const roomId = game.players.get(entity.getPlayerId());
+
+    // if (!roomId) return null;
+
+    // return game.rooms.get(roomId);
+    return garticRoom;
+}
+
+events.set('paint-ready', (entity) => {
+    const player = new Player(entity);
+    garticRoom.addPlayer(player);
+
+    const rooms = [...game.rooms.values()]
+        .map(room => ({ id: room.getId(), theme: room.getTheme(), totalPlayers: room.getTotalPlayers(), points: room.getHighestScore(), maxPoints: 120, maxPlayers: game.maxPlayers }));
+
+    entity.sendUIMessage('loadRooms', JSON.stringify({ rooms }));
+
+    garticRoom.updateRoomUI();
+});
+
+events.set('paint', (entity, data) => {
+    const room = getRoom(entity);
+
+    if (!room) return;
+
+    if (!room.getCurrentPlayer()) return;
+
+    if (room.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
+
+    if (!("history" in data) || !data.history.length) return;
+
+    room.pushLastData(data.history);
+
+    room.getPlayers().forEach(player => {
+        if (player.equals(entity)) return;
+
+        player.sendUIMessage('draw', { history: data.history });
+    });
+});
+
+events.set('notification', notification);
+
+events.set('undo', (entity) => {
+    undo(getRoom(entity));
+});
+
+events.set('redo', (entity) => {
+    redo(getRoom(entity));
+});
+
+events.set('guess', (entity, data) => {
+    guess(entity, getRoom(entity), data);
+});
+
+events.set('hint', (entity) => {
+    hint(entity, getRoom(entity));
+});
+
+events.set('skip', (entity) => {
+    skip(entity, getRoom(entity));
+});
+
+events.set('denounce', (entity) => {
+    denounce(entity, getRoom(entity));
+});
+
+events.set('leave', (entity) => {
+    const room = getRoom(entity);
+
+    if (!room) return;
+
+    const userId = entity.getPlayerId();
+    const player = room.getPlayer(userId);
+
+    if (!player) return;
+
+    leave(player, room);
+});
+
+events.set('choose-word', (entity, data) => {
+    if (!("index" in data)) return;
+
+    chooseWord(entity, getRoom(entity), data);
+});
+
+Commands.register(':start', true, (entity) => {
+    if (!entity.hasRank(98)) return;
+
+    const room = getRoom(entity);
+
+    if (!room) return;
+
+    start(room);
+});
+
+Events.on('userJoin', (entity) => {
+    entity.loadUI('paint', 'index');
+});
+
+Events.on('userLeave', (entity) => {
+    const userId = entity.getPlayerId();
+
+    const room = getRoom(userId);
+
+    if (!room) return;
+
+    const player = room.getPlayer(userId);
+
+    if (!player) return;
+
+    leave(player, room);
+});
+
+/**
+ * @param {ScriptEntity} entity
+ * @param {string} eventName
+ * @param {string} value
+ */
 const emitClientEvent = (entity, eventName, value) => {
     const exec = events.get(eventName);
     if (exec) {
@@ -15,186 +433,31 @@ const emitClientEvent = (entity, eventName, value) => {
     }
 };
 
-function getRandomTheme() {
-    return themes[Math.floor(Math.random() * themes.length)];
-}
+Events.on('uiMessage', emitClientEvent);
+Events.on('uiMessage', (entity, eventName, value) => {
+    if (!eventName.startsWith('joinRoom-')) return;
 
-function randomWord(theme) {
-    if (!theme) return "";
+    const roomId = parseInt(eventName.split('-')[1]);
 
-    const wordsList = words[theme];
-
-    if (!wordsList) return "";
-
-    return wordsList[Math.floor(Math.random() * wordsList.length)];
-}
-
-events.set('paint-ready', (entity) => {
-    if (!garticRoom.getTotalPlayers()) return;
-
-    const name = entity.getUsername();
-
-    const players = garticRoom.getPlayers()
-        .map(p => ({ player: p, name: p.getName(), points: p.getPoints(), isPlaying: garticRoom.getCurrentPlayer() && garticRoom.getCurrentPlayer().getId() === p.getId() }))
-        .sort((a, b) => b.points - a.points);
-
-    players.forEach(data => {
-        if (data.name === name) return;
-
-        data.player.sendUIMessage('addPlayer', { player: { name, points: 0, isPlaying: false } });
-    });
-
-    if (!garticRoom.getLastData().length) return;
-
-    entity.sendUIMessage('loadHistory', JSON.stringify({
-        history: {
-            history: garticRoom.getLastData(),
-            theme: garticRoom.getTheme(),
-            wordLength: garticRoom.getWord().length,
-            players
-        }
-    }));
-});
-
-events.set('paint', (entity, data) => {
-    if (!garticRoom.getCurrentPlayer()) return;
-
-    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
-
-    if (!("history" in data) || !data.history.length) return;
-
-    garticRoom.getLastData().push(data.history);
-
-    garticRoom.getPlayers().forEach(player => {
-        if (player.equals(entity)) return;
-
-        player.sendUIMessage('draw', { history: data.history });
-    });
-});
-
-events.set('notification', (entity, data) => {
-    if (!("message" in data)) return;
-
-    data.message = data.message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    entity.notification('generic', data.message || "");
-});
-
-events.set('undo', (entity, data) => {
-    if (!garticRoom.getCurrentPlayer()) return;
-
-    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
-
-    if (!garticRoom.getLastData().length) return;
-
-    garticRoom.getRedoData().push(garticRoom.getLastData().pop());
-
-    garticRoom.getPlayers().forEach(player => {
-        if (player.equals(entity)) return;
-
-        player.sendUIMessage('clear', "");
-        player.sendUIMessage('drawAll', { history: garticRoom.getLastData() });
-    });
-});
-
-events.set('redo', (entity, data) => {
-    if (!garticRoom.getCurrentPlayer()) return;
-
-    if (garticRoom.getCurrentPlayer().getId() !== entity.getPlayerId()) return;
-
-    if (!garticRoom.getRedoData().length) return;
-
-    garticRoom.getLastData().push(garticRoom.getRedoData().pop());
-
-    garticRoom.getPlayers().forEach(player => {
-        if (player.equals(entity)) return;
-
-        player.sendUIMessage('clear', "");
-        player.sendUIMessage('drawAll', { history: garticRoom.getLastData() });
-    });
-});
-
-events.set('guess', (entity, data) => {
-    if (!("word" in data) || !garticRoom.getCurrentPlayer()) return;
-
-    const player = garticRoom.getPlayer(entity);
-
-    if (!player || garticRoom.getCurrentPlayer().getId() === player.getId()) return;
-
-    const word = data.word;
-    const correct = garticRoom.isCorrectWord(word);
-
-    if (!correct) return;
-
-    if (player.scored()) return;
-
-    player.setScored(true);
-
-    garticRoom.getCurrentPlayer().updatePoints(1);
-    player.updatePoints(1);
-    player.notification('generic', `Parabéns! Você acertou a palavra!`);
-
-    garticRoom.sendUIMessage('playerScore', { player: { name: player.getName(), points: `+ ${player.getPoints()}` } });
-    garticRoom.sendUIMessage('updatePlayer', { player: { name: garticRoom.getCurrentPlayer().getName(), points: `+ ${garticRoom.getCurrentPlayer().getPoints()}` } });
-});
-
-Commands.register(':start', true, (user, message) => {
-    if (!user.hasRank(98)) return;
-
-    let theme = getRandomTheme();
-    let word = randomWord(theme);
-
-    if (!garticRoom.getTotalPlayers()) {
-        user.notification('generic', 'Não há jogadores suficientes para iniciar o jogo.');
+    if (!roomId) {
+        entity.notification('generic', 'Sala não encontrada.');
         return;
     }
 
-    while (!theme || !word) {
-        theme = getRandomTheme();
-        word = randomWord(theme);
+    const room = game.rooms.get(roomId);
+
+    if (!room) {
+        entity.notification('generic', 'Sala não encontrada.');
+        return;
     }
 
-    garticRoom.setTheme(theme);
-    garticRoom.setWord(word);
+    const player = new Player(entity);
 
-    const players = garticRoom.getPlayers().sort(() => Math.random() - 0.5);
+    if (game.players.has(player.getId())) {
+        entity.notification('generic', 'Você já está em uma sala.');
+        return;
+    }
 
-    const player = players[0];
-
-    garticRoom.setCurrentPlayer(player);
-
-    player.notification('generic', `É a sua vez, ${player.getName()}!`);
-
-    garticRoom.getPlayers().forEach(p => {
-        p.sendUIMessage('start', { theme: theme, time: 0, wordLength: word.length, player: { name: player.getName() }, isPlaying: p.getId() === player.getId() });
-    });
-
-    player.sendUIMessage('setWord', { word });
+    room.addPlayer(player);
+    game.players.set(player.getId(), roomId);
 });
-
-Events.on('userJoin', (user) => {
-    user.loadUI('paint', 'index');
-
-    garticRoom.addPlayer(new Player(user));
-});
-
-Events.on('userLeave', (user) => {
-    const userId = user.getPlayerId();
-    const player = garticRoom.getPlayer(userId);
-
-    if (!player) return;
-
-    garticRoom.removePlayer(player);
-
-    garticRoom.sendUIMessage('removePlayer', { player: { name: player.getName() } });
-
-    if (!garticRoom.getCurrentPlayer()) return;
-
-    if (garticRoom.getCurrentPlayer().getId() !== userId) return;
-
-    garticRoom.setCurrentPlayer(null);
-    garticRoom.clearLastData();
-    garticRoom.clearRedoData();
-});
-
-Events.on('uiMessage', emitClientEvent);
