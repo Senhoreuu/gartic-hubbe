@@ -902,10 +902,10 @@
             action = 'BUCKET';
             shape = 'NORMAL';
         }
-        
+
         $('#bucket').on('click', bucketClick);
         $('#bucket').on('touchstart', bucketClick);
-        
+
         function pencilClick() {
             if (!playing) return;
             setEraser(false);
@@ -913,7 +913,7 @@
 
         pencil.onclick = pencilClick;
         pencil.ontouchstart = pencilClick;
-        
+
         function lineClick() {
             if (!playing) return;
             shape = 'LINE';
@@ -922,43 +922,43 @@
 
         $('#line').on('click', lineClick);
         $('#line').on('touchstart', lineClick);
-        
+
         function squareRegularClick() {
             if (!playing) return;
             shape = 'SQUARE';
             action = 'DRAW';
         }
-        
+
         $('#square-regular').on('click', squareRegularClick);
         $('#square-regular').on('touchstart', squareRegularClick);
-        
+
         function squareSolidClick() {
             if (!playing) return;
             shape = 'SQUARE_SOLID';
             action = 'DRAW';
         }
-        
+
         $('#square-solid').on('click', squareSolidClick);
         $('#square-solid').on('touchstart', squareSolidClick);
-        
+
         function circleRegularClick() {
             if (!playing) return;
             shape = 'CIRCLE';
             action = 'DRAW';
         }
-        
+
         $('#circle-regular').on('click', circleRegularClick);
         $('#circle-regular').on('touchstart', circleRegularClick);
-        
+
         function circleSolidClick() {
             if (!playing) return;
             shape = 'CIRCLE_SOLID';
             action = 'DRAW';
         }
-        
+
         $('#circle-solid').on('click', circleSolidClick);
         $('#circle-solid').on('touchstart', circleSolidClick);
-        
+
         function clearButtonClick() {
             if (!playing) return;
             shape = 'NORMAL';
@@ -973,16 +973,16 @@
                 }
             ]);
         }
-        
+
         $('#clear').on('click', clearButtonClick);
         $('#clear').on('touchstart', clearButtonClick);
-        
+
         function recentColorsClick(e) {
             if (!playing) return;
             if (!e.target.hasAttribute('data-color')) return;
             changeColor(e.target);
         }
-        
+
         $('#recentColors').on('click', recentColorsClick);
         $('#recentColors').on('touchstart', recentColorsClick);
 
@@ -1257,11 +1257,32 @@
         roomElement.appendChild(infosRoom);
 
         function joinRoom() {
+            if (room.totalPlayers === room.maxPlayers) return;
+
+            if (!roomElement.classList.contains('selected')) {
+                const rooms = document.querySelectorAll('.room');
+
+                rooms.forEach(element => {
+                    element.classList.remove('selected');
+                });
+
+                roomElement.classList.add('selected');
+                return;
+            }
+
             window.sendScriptMessage('join', { room: room.id });
 
             $(".gartic-menu").addClass('hidden');
             $("#rooms").addClass('hidden');
             $('.container-canvas').css('display', 'flex');
+        }
+
+        function leaveRoom() {
+            roomElement.classList.remove('selected');
+
+            $(".gartic-menu").removeClass('hidden');
+            $("#rooms").removeClass('hidden');
+            $('.container-canvas').css('display', 'none');
         }
 
         function updateRoom(newData) {
@@ -1283,16 +1304,18 @@
             roomElement.addEventListener('click', joinRoom);
         }
 
-        roomElement.addEventListener('click', joinRoom);
-
-        paintHandler.on(`disposeRoom-${room.id}`, function () {
+        function disposeRoom() {
             roomElement.remove();
 
             paintHandler.off(`updateRoom-${room.id}`);
             paintHandler.off(`disposeRoom-${room.id}`);
-        });
+        }
 
+        roomElement.addEventListener('click', joinRoom);
+
+        paintHandler.on(`disposeRoom-${room.id}`, disposeRoom);
         paintHandler.on(`updateRoom-${room.id}`, updateRoom);
+        paintHandler.on(`leaveRoom-${room.id}`, leaveRoom);
 
         $('#rooms').append(roomElement);
     }
