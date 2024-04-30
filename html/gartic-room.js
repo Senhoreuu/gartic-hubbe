@@ -2,8 +2,8 @@
     $('#open-rooms').on('click', function (e) {
         e.preventDefault();
 
-        if ($('#rooms').css('display') === 'block') {
-            $('#rooms').css('animation', 'fadeOutUp 0.5s forwards');
+        if (!$('#rooms').hasClass('hidden')) {
+            $('#rooms').css('animation', 'fadeOutLeft 0.5s forwards');
 
             setTimeout(() => {
                 $('#rooms').addClass('hidden');
@@ -13,7 +13,7 @@
         }
 
         $('#rooms').removeClass('hidden');
-        $('#rooms').css('animation', 'fadeInDown 0.5s forwards');
+        $('#rooms').css('animation', 'fadeInLeft 0.5s forwards');
 
         setTimeout(() => {
             $('#rooms').css('animation', '');
