@@ -304,7 +304,7 @@ const leave = (entity) => {
 
     room.addCustomMessage(message);
 
-    player.sendUIMessage(`leaveRoom-${room.getId()}`, "");
+    entity.sendUIMessage(`leaveRoom-${room.getId()}`, "");
 
     if (!room.getCurrentPlayer()) return;
 
