@@ -1,85 +1,31 @@
 import themes from "./themes.js";
 import { removeAccents } from "./utils.js";
 import words from "./words.js";
+import GarticData from "./GarticData.js";
 
-export default class Gartic {
-    #lastData = [];
-    #redoData = [];
-    #undoData = [];
+export default class Gartic extends GarticData {
     #word = "";
     #theme = "";
-    #hint = "";
-    #hints = 0;
+    #usedHints = 0;
     #maxHints = 0;
+    #hints = [];
 
-    constructor() { }
-
-    getLastData() {
-        return this.#lastData;
-    }
-
-    pushLastData(data) {
-        this.#lastData.push(data);
-    }
-
-    setLastData(data) {
-        this.#lastData = data;
-    }
-
-    popLastData() {
-        return this.#lastData.pop();
-    }
-
-    getRedoData() {
-        return this.#redoData;
-    }
-
-    popRedoData() {
-        return this.#redoData.pop();
-    }
-
-    pushRedoData(data) {
-        this.#redoData.push(data);
-    }
-
-    setRedoData(data) {
-        this.#redoData = data;
-    }
-
-    getUndoData() {
-        return this.#undoData;
-    }
-
-    setUndoData(data) {
-        this.#undoData = data;
-    }
-
-    pushUndoData(data) {
-        this.#undoData.push(data);
-    }
-
-    popUndoData() {
-        return this.#undoData.pop();
+    constructor() {
+        super();
     }
 
     getTheme() {
+        if (this.#theme.toLowerCase() === "geral") return themes.filter(t => t.length)[Math.floor(Math.random() * themes.length)];
+        
+        return this.#theme;
+    }
+
+    getCurrentTheme() {
         return this.#theme;
     }
 
     getWord() {
         return this.#word;
-    }
-
-    clearLastData() {
-        this.#lastData = [];
-    }
-
-    clearRedoData() {
-        this.#redoData = [];
-    }
-
-    clearUndoData() {
-        this.#undoData = [];
     }
 
     setTheme(theme) {
@@ -113,40 +59,27 @@ export default class Gartic {
         this.#maxHints = (word.length / 2);
     }
 
-    getHint() {
-        return this.#hint;
+    getHints() {
+        return this.#hints;
     }
 
     usedHints() {
-        return this.#hints;
+        return this.#usedHints;
     }
 
     getMaxHints() {
         return this.#maxHints;
     }
 
-    addHint() {
-        if (this.#hints >= this.#maxHints) return;
+    incrementHint() {
+        if (this.#usedHints >= this.#maxHints) return;
 
-        this.#hints++;
+        this.#usedHints++;
     }
 
     addRandomHint() {
         if (!this.#word) return;
 
         const word = this.#word.toLowerCase();
-        const hint = this.#hint || Array(word.length).fill("_");
-
-        const index = hint.findIndex(h => h === "_");
-
-        if (index === -1) return;
-
-        hint[index] = word[index];
-
-        this.#hint = hint.join("");
-
-        this.addHint();
-
-        this.sendUIMessage('setHint', { hint: this.#hint });
     }
 }

@@ -1,5 +1,5 @@
 const words = {
-    "Animais": [
+    "animais": [
         "Cachorro-da-terra",
         "Albatroz",
         "Jacaré",
@@ -191,7 +191,7 @@ const words = {
         "Iaque",
         "Zebra"
     ],
-    "Objetos": [
+    "objetos": [
         "Relógio",
         "Caneta",
         "Lápis",
@@ -312,13 +312,13 @@ const words = {
         "Jeans",
         "Couro"
     ],
-    "Comidas": [
+    "comidas": [
     ],
-    "Profissões": [],
-    "Países": [],
-    "Cores": [],
-    "Esportes": [],
-    "Frutas": [
+    "profissões": [],
+    "países": [],
+    "cores": [],
+    "esportes": [],
+    "frutas": [
         "Abacate", "Abacaxi", "Açaí", "Acerola", "Ameixa", "Amora", "Anona", "Arando", "Ata", "Banana",
         "Cacau", "Caju", "Caqui", "Carambola", "Cereja", "Ciriguela", "Coco", "Cranberry", "Damasco", "Durião",
         "Figo", "Framboesa", "Fruta do conde", "Fruta-pão", "Goiaba", "Graviola", "Groselha", "Guaraná", "Jabuticaba", "Jaca",

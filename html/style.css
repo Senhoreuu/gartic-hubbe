@@ -367,8 +367,7 @@
     align-items: center;
     justify-content: center;
     z-index: 100;
-    bottom: 10px;
-    right: calc(50% - 57.5%);
+    bottom: 15px;
 }
 
 .timer {
@@ -472,6 +471,7 @@
     -webkit-justify-content: center;
     -moz-justify-content: center;
     justify-content: center;
+    color: black;
 }
 
 .title {

@@ -1,12 +1,13 @@
 const themes = [
-    "Animais",
-    "Objetos",
-    "Comidas",
-    "Profissões",
-    "Países",
-    "Cores",
-    "Esportes",
-    "Frutas"
+    "geral",
+    "animais",
+    "objetos",
+    "comidas",
+    "profissões",
+    "países",
+    "cores",
+    "esportes",
+    "frutas"
 ];
 
 export default themes;
